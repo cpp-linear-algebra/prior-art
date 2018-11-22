@@ -1,4 +1,8 @@
 livepreview
 build-lua
+.gitignore
+.vimrc
+*.sav
+*.bak
 
 
