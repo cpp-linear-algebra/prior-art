@@ -1,0 +1,29 @@
+\documentclass[oneside,12pt,headings=optiontoheadandtoc,a4paper]{scrbook}
+
+\usepackage{cpphelper}
+
+% BibTeX
+\usepackage[sorting=ydnt,bibstyle=alphabetic,
+            citestyle=alphabetic,backend=biber]{biblatex}
+\addbibresource{library.bib}
+
+\subject{}
+\subtitle{}
+\title{Prior Art for Linear Algebra}
+\author{}
+
+
+\begin{document}
+\frontmatter
+\maketitle
+
+\tableofcontents
+\mainmatter
+
+\input{brief-history}
+
+\backmatter
+\printbibliography[heading=bibintoc]
+\end{document}
+
+

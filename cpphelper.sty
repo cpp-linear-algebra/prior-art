@@ -1,0 +1,40 @@
+\ProvidesPackage{cpphelper}
+
+%% Geometry
+\usepackage[left=20mm,top=25mm,bottom=25mm,right=10mm]{geometry}
+
+% Package for Algorithm
+\usepackage[
+  linesnumbered,
+  lined,
+  boxed,
+  commentsnumbered,
+  titlenumbered,
+  algoruled,
+  dotocloa
+  ]{algorithm2e}
+
+\usepackage[final]{microtype}
+\usepackage{fontspec}
+\usepackage[
+  mathup=sym, mathit=sym, mathsf=sym, mathbf=sym,
+  mathtt=sym, math-style=ISO
+]{unicode-math}
+\setmainfont{Latin Modern Roman}
+\setmathfont[Scale=MatchLowercase]{Latin Modern Math}
+\setmathfont
+  [
+      Extension = .otf,
+      Scale=MatchLowercase,
+      range={scr,bfscr}
+  ]{xits-math}
+
+% Package to Refer to Footnotes
+\usepackage{footmisc}
+
+% Inline Code Highlighting
+\usepackage{xcolor}
+\definecolor{codegray}{gray}{0.95}
+\newcommand{\inlinecode}[1]
+{\fcolorbox{white}{codegray}{\textcolor{RawSienna}{\texttt{#1}}}}
+
