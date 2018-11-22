@@ -201,7 +201,7 @@ parallel distributions, I can't add them together without communication.
 but this generally means some combination of moving data between processors
 (either through a memory hierarchy, or across a network), and synchronization
 between processors. Communication is expensive relative to floating-point
-arithmetic \footnote{}. It also affects the correctness, because it may
+arithmetic \cite{Blackford1997}. It also affects the correctness, because it may
 introduce deadlock, depending on what surrounding code does. Thus, programmers
 like to see communication made explicit, even if it is hidden behind a
 convenient interface.
@@ -220,7 +220,8 @@ or vector, and check themselves whether two different distributions are the
 same.  It’s easier to explain all this to users in the abstract language of
 vector spaces.
 
-Even if I don’t care about distributed-memory parallelism, I may still care about shared-memory parallelism (threads) and memory affinity.
+Even if I don’t care about distributed-memory parallelism, I may still care
+about shared-memory parallelism (threads) and memory affinity.
 
 \section{A Matrix has Four Vector Spaces}
 
