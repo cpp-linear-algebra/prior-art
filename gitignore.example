@@ -1,5 +1,6 @@
 livepreview
 build-lua
+build-pdf
 .gitignore
 .vimrc
 *.sav
