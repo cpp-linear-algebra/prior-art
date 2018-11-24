@@ -8,11 +8,9 @@ Ensure that you have LaTeX and Biber installed.
 $ make
 ```
 
-## Rendering the most recent version
+## Rendering of the most recent version
 
-Work is ongoing in this area. I might have something up soon.
-
-## Contact
-
-- Jayesh Badwaik
+The most recent version of the master branch is automatically rendered
+[here](https://cpp-linear-algebra.github.io/prior-art/prior-art-for-linear-algebra.pdf).
+It takes around 2-3 minutes to render the document.
 
