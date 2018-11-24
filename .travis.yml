@@ -1,0 +1,35 @@
+sudo: required
+language: generic
+services:
+  - docker
+
+branches:
+  only:
+    - master
+
+before_script :
+  - docker pull jayeshbadwaik/texdocker
+
+script:
+  - CONTAINER=texdocker
+  - SRC=$PWD
+  - docker run --cap-add=SYS_PTRACE -t -d --name ${CONTAINER} jayeshbadwaik/${CONTAINER} bash
+  - docker exec ${CONTAINER} /bin/bash -c "mkdir -p /document"
+  - docker cp $SRC/. ${CONTAINER}:/document
+  - docker exec ${CONTAINER} /bin/bash -c "source /root/.bashrc && cd /document && make verbose"
+  - mkdir /tmp/pages
+  - docker cp texdocker:/document/prior-art-for-linear-algebra.pdf /tmp/pages/
+  - docker stop ${CONTAINER}
+  - docker rm ${CONTAINER}
+
+
+
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  keep-history: true
+  on:
+    branch: master
+  local-dir:  /tmp/pages/
+  keep-history: true
