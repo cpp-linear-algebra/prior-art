@@ -31,16 +31,16 @@ The introduction talks about the issues like needing to teach compilers how to
 fuse loops and avoid temporaries when doing overloaded-operator arithmetic on
 arrays in C++. It also shows the existence of C++ libraries for a variety of
 applications, including a library of multidimensional arrays, and the
-integrations of C++ with distributed-memory parallel computation.
+integration of C++ with distributed-memory parallel computation.
 
 One can see the explosion of interest in ``object-oriented numerics'' by the large
 variety of conferences that sprang up in the mid-1990's.\footnote{See e.g.,
 \url{http://www.math.unipd.it/~michela/OP.htm#conferences}.} Interest died
-down later, but this perhaps reflects the stage in scientific software development
+down later, but this perhaps reflects the stage in mathematical software development
 where users came to accept externally developed libraries as part of their
-applications. In the United States, this may correspond to the 1996 founding
-of the Department of Energy's Accelerated Strategic Computing Initiative
-(ASCI) program.{\footnote{messina1996asci}}
+applications. In the United States, this may correspond to the
+Department of Energy's Accelerated Strategic Computing Initiative
+(ASCI) program, which was founded in 1996.\footnote{\cite{messina1996asci}}
 An important part of ASCI was ``[s]oftware design and development''
 for complicated ``multi-physics scientific applications.''
 Before ASCI, experience with such software development was ``limited to a few
@@ -49,26 +49,33 @@ projects that will provide proofs of principle, at scale, of software developmen
 methodologies and frameworks that provide portability, extensibility, modularity,
 and maintainability while delivering acceptable performance.''
 
-High-performance computer hardware and software went through a massive
-shift in the 1990's that disrupted Fortran's dominance and let
-developers write more complicated codes.  The early 1990's saw the
-introduction of so-called ``killer micros,'' consumer-grade
-microprocessors that threatened the dominance of expensive vector
-supercomputers.\footnote{\cite{killermicros1991}} Vector computers depended
-on custom vectorizing compilers for a restricted set of languages
-(usually Fortran, not C) for good performance.  Killer micros'
-hardware cost much less, and performance improvements tracked the
-18-month Moore's Law curve. Thus, developers had more freedom to use
-languages other than Fortran, and to write more complicated codes that
-were harder for compilers to optimize.  Simultaneously, new
-distributed-memory parallel computers emerged, along with new
-languages to program them.  For example, favored languages for the
-CM-2 were *Lisp (an ANSI Common Lisp derivative) and C* (a parallel
-superset of ANSI C).\footnote{\cite{CM2}} Library-oriented approaches
-to parallel computing, like PVM and MPI, came with C as well as
-Fortran bindings. The switch from Fortran and the increasing
-complexity of software made C++ and richer library abstractions more
-attractive.
+Another contribution to the development of C++ linear algebra
+libraries may have been the ``killer micros'' revolution of the early
+1990's.  Killer micros were consumer-grade, low-cost microprocessors
+whose performance threatened and eventually overtook that of expensive
+vector supercomputers.\footnote{\cite{killermicros1991}} This
+revolution disrupted Fortran's dominance and let developers write more
+complicated codes.  Vector supercomputers like the Cray 1 depended on
+custom vectorizing Fortran compilers for good performance.  ``Scalar''
+code ran much more slowly on the Cray 1 than vectorized code, and
+getting code to vectorize took careful dialog with the compiler.
+Killer micros had less optimized hardware, but also had performance
+less sensitive to software design.  Hardware performance improvements
+tracked the 18-month Moore's Law curve, so users could just wait for
+the next processor generation, instead of expensively optimizing their
+code.  This gave developers more freedom to use languages other than
+Fortran, and to write more complicated codes that depended less on
+vectorization.  Simultaneously, new distributed-memory parallel
+computers emerged, along with new languages to program them.  For
+example, the technical report describing Connection Machine's CM-1
+only mentions one programming language: *Lisp, an ANSI Common Lisp
+derivative.\footnote{\cite{kahle1989cm1}} Applications running on CM-2
+also used C*, a parallel superset of ANSI C.  Other distributed-memory
+parallel computers of the era favored C and offered C++ compilers.
+Library-oriented approaches to parallel computing, like PVM and MPI,
+came with C as well as Fortran bindings.  The switch from Fortran and
+the increasing complexity of software made C++ and richer library
+abstractions more attractive.
 
 \section{Templates}
 
@@ -86,9 +93,9 @@ library's author, focuses on expression templates for vector operations.
 Developers also recognized the cost of virtual method calls in C++,
 especially in inner tight loops, and used templates to reduce the cost
 of run-time polymorphism.  For example, the Bernoulli Generic Matrix
-Library uses the ``Barton-Nackman trick''\footnote{\cite{Barton1994}}, a special
-case of the ``Curiously Recurring Template Pattern,'' to turn run-time
-polymorphism into compile-time polymorphism.\footnote{In
+Library uses the ``Barton-Nackman trick,''\footnote{\cite{Barton1994}}
+a special case of the ``Curiously Recurring Template Pattern,'' to
+turn run-time polymorphism into compile-time polymorphism.\footnote{In
   \cite{Mateev2000}, authors cite \cite{Veldhuizen2000}}
 
 Early libraries that relied on templates suffered due to incomplete compiler
@@ -97,30 +104,31 @@ compiler to test language feature compliance. Its User's Guide recommends that
 if the compiler ``doesn't have member templates and enum computations, just give
 up.''\footnote{See Section 1.4.3 of \cite{blitz2005}.} A comparable library,
 POOMA (Parallel Object-Oriented Methods and
-Applications)\footnote{\url{http://www.nongnu.org/freepooma/tutorial/introduction.html}},
+Applications),\footnote{\url{http://www.nongnu.org/freepooma/tutorial/introduction.html}}
 pushed the boundaries of what the available C++
 compilers could handle. Chris Luchini, a POOMA developer, recalls that the
 project exposed many compiler bugs.\footnote{\cite{hoemmen2018history}}
 Many compilers lagged behind the C++ standard,
 only implemented a subset of features,
-and generated slow code\cite{Mateev2000}.
+and generated slow code.\footnote{\cite{Mateev2000}}
 
 Software for scientific computing may need to build with several different
 compilers and run on different kinds of hardware. Lack of consistently complete
 implementations of templates challenged portability requirements and restricted
 adoption. For example, in the Trilinos software project, a requirement to
 support a C++ compiler with incomplete template support drove the project to
-forbid templates in its foundational linear algebra library, Epetra.\cite{hoemmen2018history}
+forbid templates in its foundational linear algebra library, Epetra.\footnote{\cite{hoemmen2018history}}
 
 \section{POOMA}
 
-The POOMA (Parallel Object-Oriented Methods and Applications) project was most
-active 1998-2000. POOMA's goal was to support structured grid and dense array
-computations. As per oral history from Chris Luchini \footnote{See \cite{hoemmen2018history}.} and POOMA's documentation, the team had a
-particular interest in SGI Origin shared-memory parallel computers. POOMA shares
-features with more recently linear algebra libraries, such as polymorphism on
-storage layout and parallel programming model, so it is worth studying for
-historical lessons.
+The POOMA (Parallel Object-Oriented Methods and Applications) project
+was most active 1998-2000. POOMA's goal was to support structured grid
+and dense array computations. As per oral history\footnote{See
+  \cite{hoemmen2018history}.} and POOMA's documentation, the team had
+a particular interest in SGI Origin shared-memory parallel
+computers. POOMA shares features with more recently linear algebra
+libraries, such as polymorphism on storage layout and parallel
+programming model, so it is worth studying for historical lessons.
 
 POOMA's main data structure is Array. Array has three template parameters:
 the rank (the number of dimensions),
@@ -128,18 +136,17 @@ the entry type (e.g., \texttt{double}),
 and the ``engine.''
 Engines are about storage of data.
 They correspond somewhat to the Accessor policy
-in the \texttt{mdspan} multidimensional array proposal \cite{Edwards}.
+in the \texttt{mdspan} multidimensional array proposal.\footnote{\cite{P0009r8}}
 An engine implements access to entries of the Array.
 Entries could actually exist in some storage somewhere,
 or they could be computed from indices and not actually stored. Engines also
-describe parallel distribution somewhat -- e.g., through the MultiPatch engine
-\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-04.html}}.
+describe parallel distribution somewhat -- e.g., through the MultiPatch engine.\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-04.html}}
 
 POOMA's Internals and Ranges let users construct possibly strided
 multidimensional index ranges. These features let users write very general
 indexed loops, like in the ZPL programming language.\footnote{\cite{Chamberlain1998}}
 However, POOMA users had to work a bit harder on distributed-memory parallel
-systems, to expose ``guard regions'' with redundant storage on process boundaries.\footnote{ This essentially means that POOMA did not do implicit boundary
+systems, to expose ``guard regions'' with redundant storage on process boundaries.\footnote{This essentially means that POOMA did not do implicit boundary
   exchange.  High-performance computing experts like to expose and reify the
   parallel distribution, and any redistribution operations. This helps them
   avoid communication and data movement, and makes parallel synchronization
@@ -150,8 +157,7 @@ systems, to expose ``guard regions'' with redundant storage on process boundarie
 
 The POOMA project had to ``discover'' experimentally how C++ templates work, and
 develop their own idioms. For example, the developers learned that C++
-does not permit templating on return type and then deducing the return type
-\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-03.html}}.
+does not permit templating on return type and then deducing the return type.\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-03.html}}
 As mentioned above, POOMA developers also had to explore the limits of compiler
 correctness and performance.
 
