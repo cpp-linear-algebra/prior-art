@@ -1,22 +1,22 @@
 \chapter{Brief History of Linear Algebra Libraries in C++}
 
-
-\section{Object-Oriented Numerics in the '90s}
+\section{Object-Oriented Numerics in the 1990s}
 
 Linear algebra libraries in C++ at first evolved from the general category of
-"object-oriented programming." For example, the First annual Object-Oriented
-Numerics Conference (OON-SKI) took place in 1993\footnote{\url{
-https://www.hindawi.com/journals/sp/si/250702/}}. Rogue Wave, a c++
-compiler company, sponsored OON-SKI, so the conference logically focuses on work
-in C++. "Numerics" here means "numerical computation" or "scientific computing":
+``object-oriented programming.'' For example, the First annual Object-Oriented
+Numerics Conference (OON-SKI) took place in
+1993.\footnote{\url{https://www.hindawi.com/journals/sp/si/250702/}}
+Rogue Wave, a C++ compiler company, sponsored OON-SKI,
+so the conference logically focuses on work in C++.
+``Numerics'' here means ``numerical computation'' or ``scientific computing'':
 computations on large arrays of floating-point numbers, doing things like
-discretizing differential equations or statistical data analysis \footnote{
-Authors use adjectives like “numerical” to describe scientific and engineering
-computation.}.  The introduction to the corresponding journal special issue
-described the phenomenon of "object-oriented numerics" as follows:
+discretizing differential equations or statistical data analysis.\footnote{
+Authors use adjectives like ``numerical'' to describe scientific and engineering
+computation.}  The introduction to the corresponding journal special issue
+described the phenomenon of ``object-oriented numerics'' as follows:
 
 \begin{quote}
-  ... [W]e are observing the emergence of a subdiscipline: the use of
+  \ldots [W]e are observing the emergence of a subdiscipline: the use of
   object-oriented techniques in numerics. But what we are really seeing is
   something even more profound: finally rejoining of scientific computing with
   the science of computers. Traditionally, programming has been done by
@@ -29,105 +29,135 @@ described the phenomenon of "object-oriented numerics" as follows:
 
 The introduction talks about the issues like needing to teach compilers how to
 fuse loops and avoid temporaries when doing overloaded-operator arithmetic on
-arrays in c++. It also shows the existence of C++ libraries for a variety of
+arrays in C++. It also shows the existence of C++ libraries for a variety of
 applications, including a library of multidimensional arrays, and the
-integrations of C++ with distributed-memory parallel computation.
+integration of C++ with distributed-memory parallel computation.
 
-One can see the explosion of interest in ``object-oriented numerics" by the large
-variety of conferences that sprang up in the mid-90's \footnote{  See e.g.
-\url{http://www.math.unipd.it/~michela/OP.htm#conferences}}. Interest died
-down later, but this perhaps reflects the stage in scientific software developer
+One can see the explosion of interest in ``object-oriented numerics'' by the large
+variety of conferences that sprang up in the mid-1990's.\footnote{See e.g.,
+\url{http://www.math.unipd.it/~michela/OP.htm#conferences}.} Interest died
+down later, but this perhaps reflects the stage in mathematical software development
 where users came to accept externally developed libraries as part of their
-applications. In the U.S., this may correspond to the Department of Energy's
-ASCI program the resulting increase in complexity and fidelity of simulations.
-Simultaneously, the "killer micros" started to make traditional vector computing
-obsolete, and new distributed-memory parallel computers emerged. This may have
-influenced a switch from FORTRAN to other programming languages. Some newer
-computers did not have Fortran compiler, or required use of non-Fortran
-languages for best performance.
+applications. In the United States, this may correspond to the
+Department of Energy's Accelerated Strategic Computing Initiative
+(ASCI) program, which was founded in 1996.\footnote{\cite{messina1996asci}}
+An important part of ASCI was ``[s]oftware design and development''
+for complicated ``multi-physics scientific applications.''
+Before ASCI, experience with such software development was ``limited to a few
+isolated projects.'' ASCI aimed to ``carry out multiple substantial simulation
+projects that will provide proofs of principle, at scale, of software development
+methodologies and frameworks that provide portability, extensibility, modularity,
+and maintainability while delivering acceptable performance.''
 
+Another contribution to the development of C++ linear algebra
+libraries may have been the ``killer micros'' revolution of the early
+1990's.  Killer micros were consumer-grade, low-cost microprocessors
+whose performance threatened and eventually overtook that of expensive
+vector supercomputers.\footnote{\cite{killermicros1991}} This
+revolution disrupted Fortran's dominance and let developers write more
+complicated codes.  Vector supercomputers like the Cray 1 depended on
+custom vectorizing Fortran compilers for good performance.  ``Scalar''
+code ran much more slowly on the Cray 1 than vectorized code, and
+getting code to vectorize took careful dialog with the compiler.
+Killer micros had less optimized hardware, but also had performance
+less sensitive to software design.  Hardware performance improvements
+tracked the 18-month Moore's Law curve, so users could just wait for
+the next processor generation, instead of expensively optimizing their
+code.  This gave developers more freedom to use languages other than
+Fortran, and to write more complicated codes that depended less on
+vectorization.  Simultaneously, new distributed-memory parallel
+computers emerged, along with new languages to program them.  For
+example, the technical report describing Connection Machine's CM-1
+only mentions one programming language: *Lisp, an ANSI Common Lisp
+derivative.\footnote{\cite{kahle1989cm1}} Applications running on CM-2
+also used C*, a parallel superset of ANSI C.  Other distributed-memory
+parallel computers of the era favored C and offered C++ compilers.
+Library-oriented approaches to parallel computing, like PVM and MPI,
+came with C as well as Fortran bindings.  The switch from Fortran and
+the increasing complexity of software made C++ and richer library
+abstractions more attractive.
 
 \section{Templates}
-C++ had a reputation for poor performance compared with FORTRAN. Even developers
-willing to write C++ in "numerical" codes considered it better to use C++ has a
-high-level coordination language, and use a lower-level language like C for
-tight loops\cite{Arge1997}. Developers saw C++ templates, in particular
+
+C++ had a reputation for poor performance compared with Fortran. Even developers
+willing to write C++ in ``numerical'' codes considered it better to use C++ has a
+high-level coordination language, and reserve lower-level languages like C for
+tight loops.\footnote{\cite{Arge1997}} Developers saw C++ templates, in particular
 expression templates, as an optimization technique that could close the
 performance gap. Expression templates would let developers write compact,
-abstract code that "looks like math", yet optimizes by fusing loops and avoiding
-temporaries. For example, the Dr. Dobbs article on Blitz++ \footnote{ See e.g.,
-  the 2005 version of the Blitz++ 0.9 User’s Guide:
-\url{http://physik.uni-graz.at/~crg/Programmierkurs1112/pdfs/blitz.pdf}.  }
-focuses on expression templates for vector
-operations\footnote{\url{http://www.drdobbs.com/cpp/scientific-computing-c-versus-fortran/184410315}}.
-Developers also recognizes the cost of virtual method calls in C++, especially
-in inner tight loops, and used templates to reduce the cost of polymorphisms.
-For example, the Bernoulli Generic Matrix Library used the "Barton-Nackman
-trick"\cite{Barton1994}, a special case of "Curiously Recurring Template
-Pattern", to turn dynamic polymorphism into static polymorphism \footnote{In
-\cite{Mateev2000}, authors cite \cite{Veldhuizen2000}}.
+abstract code that ``looks like math,'' yet optimizes by fusing loops and avoiding
+temporaries. For example, the Dr.\ Dobbs article\footnote{\cite{dobbsblitz1997}}
+on the Blitz++ library,\footnote{\cite{blitz2005}} written by the
+library's author, focuses on expression templates for vector operations.
+
+Developers also recognized the cost of virtual method calls in C++,
+especially in inner tight loops, and used templates to reduce the cost
+of run-time polymorphism.  For example, the Bernoulli Generic Matrix
+Library uses the ``Barton-Nackman trick,''\footnote{\cite{Barton1994}}
+a special case of the ``Curiously Recurring Template Pattern,'' to
+turn run-time polymorphism into compile-time polymorphism.\footnote{In
+  \cite{Mateev2000}, authors cite \cite{Veldhuizen2000}}
 
 Early libraries that relied on templates suffered due to incomplete compiler
 implementations. For example, Blitz++'s installation process exercises the
 compiler to test language feature compliance. Its User's Guide recommends that
-if the compiler "doesn't have member templates and enum computations, just give
-up" \footnote{Blitz++ 0.9 User’s Guide, Section 1.4.3.}. A comparable library,
+if the compiler ``doesn't have member templates and enum computations, just give
+up.''\footnote{See Section 1.4.3 of \cite{blitz2005}.} A comparable library,
 POOMA (Parallel Object-Oriented Methods and
-Applications)\footnote{\url{http://www.nongnu.org/freepooma/tutorial/introduction.html}},
+Applications),\footnote{\url{http://www.nongnu.org/freepooma/tutorial/introduction.html}}
 pushed the boundaries of what the available C++
 compilers could handle. Chris Luchini, a POOMA developer, recalls that the
-project exposed many compiler bugs \footnote{ Oral history, collected by
-  Trilinos developer Mark Hoemmen circa 2017-18. \label{fn:
-oral-history-mark-hoemmen}}. Many compilers lagged behind the C++ standard, only
-implemented a subset of features and generated slow code\cite{Mateev2000}.
+project exposed many compiler bugs.\footnote{\cite{hoemmen2018history}}
+Many compilers lagged behind the C++ standard,
+only implemented a subset of features,
+and generated slow code.\footnote{\cite{Mateev2000}}
 
 Software for scientific computing may need to build with several different
 compilers and run on different kinds of hardware. Lack of consistently complete
 implementations of templates challenged portability requirements and restricted
 adoption. For example, in the Trilinos software project, a requirement to
-support a C++ compiler with incomplete template support  drove the project to
-forbid templates in its foundational linear algebra library, Epetra
-\footnote{See \footref{fn: oral-history-mark-hoemmen} }.
-
+support a C++ compiler with incomplete template support drove the project to
+forbid templates in its foundational linear algebra library, Epetra.\footnote{\cite{hoemmen2018history}}
 
 \section{POOMA}
 
-The POOMA (Parallel Object-Oriented Methods and Applications) project was most
-active 1998-2000. POOMA's goal was to support structured grid and dense array
-computations. As per Chris Luchini's oral history \footnote{See \footref{fn:
-oral-history-mark-hoemmen} } and POOMA's documentation, the team had a
-particular interest in SGI Origin shared-memory parallel computers. POOMA shares
-features with more recently linear algebra libraries, such as polymorphism on
-storage layout and parallel programming model, so it is worth studying for
-historical lessons.
+The POOMA (Parallel Object-Oriented Methods and Applications) project
+was most active 1998-2000. POOMA's goal was to support structured grid
+and dense array computations. As per oral history\footnote{See
+  \cite{hoemmen2018history}.} and POOMA's documentation, the team had
+a particular interest in SGI Origin shared-memory parallel
+computers. POOMA shares features with more recently linear algebra
+libraries, such as polymorphism on storage layout and parallel
+programming model, so it is worth studying for historical lessons.
 
-POOMA's main data structure is Array. Array has three template parameters: the
-rank (the number of dimensions), the entry type (e.g. double), and the "engine".
-Engines are about storage of data. They correspond somewhat to the Accessor
-policy in the mdspan multidimensional array proposal \cite{Edwards}. An engine
-implements access of entries. Entries could actually exist in some storage
-somewhere, or be computed from indices and not actually stored. Engines also
-describe parallel distribution somewhat -- e.g. through the MultiPatch engine
-\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-04.html}}.
+POOMA's main data structure is Array. Array has three template parameters:
+the rank (the number of dimensions),
+the entry type (e.g., \texttt{double}),
+and the ``engine.''
+Engines are about storage of data.
+They correspond somewhat to the Accessor policy
+in the \texttt{mdspan} multidimensional array proposal.\footnote{\cite{P0009r8}}
+An engine implements access to entries of the Array.
+Entries could actually exist in some storage somewhere,
+or they could be computed from indices and not actually stored. Engines also
+describe parallel distribution somewhat -- e.g., through the MultiPatch engine.\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-04.html}}
 
 POOMA's Internals and Ranges let users construct possibly strided
-multidimensional index ranges.  These features let users write very general
-indexed loops, like in the ZPL programming language \cite{Chamberlain1998}.
+multidimensional index ranges. These features let users write very general
+indexed loops, like in the ZPL programming language.\footnote{\cite{Chamberlain1998}}
 However, POOMA users had to work a bit harder on distributed-memory parallel
-systems, to expose “guard regions” with redundant storage on process boundaries
-\footnote{ This essentially means that POOMA did not do implicit boundary
+systems, to expose ``guard regions'' with redundant storage on process boundaries.\footnote{This essentially means that POOMA did not do implicit boundary
   exchange.  High-performance computing experts like to expose and reify the
   parallel distribution, and any redistribution operations. This helps them
   avoid communication and data movement, and makes parallel synchronization
   semantics clear.  This is also a bit of a reaction to High-Performance
   Fortran, where even copying from one array to another could require parallel
   synchronization.
-}.
+}
 
-The POOMA project had to “discover” experimentally how C++ templates work, and
-develop their own idioms. For example, the developers learned that C++ doesn't
-permit templating on return type and then deducing the return type
-\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-03.html}}.
+The POOMA project had to ``discover'' experimentally how C++ templates work, and
+develop their own idioms. For example, the developers learned that C++
+does not permit templating on return type and then deducing the return type.\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-03.html}}
 As mentioned above, POOMA developers also had to explore the limits of compiler
 correctness and performance.
 
@@ -136,23 +166,24 @@ correctness and performance.
 As experience with C++ templates increased, some developers applied them to more
 radical code optimizations.  For example, the Bernoulli Generic Matrix Library
 used templates to generate optimized sparse matrix codes from a high-level
-specification \footnote{\cite{Ahmed2000} By the time, I (Mark Hoemmen)
+specification.\footnote{\cite{Ahmed2000} By the time, I (Mark Hoemmen)
 encountered the Bernoulli project, it had abandoned C++ code generation in
 favor of OCaml (or some other ML derivative)-based code generation framework.
 My guess is that avoiding intermediate high-level C++ step improved run-time
-performance and avoided compiler correctness issues}.  Bernoulli used a kind of
+performance and avoided compiler correctness issues.}  Bernoulli used a kind of
 relational algebra (described in detail in the PhD dissertation) that is
-somewhat analogous to the Ranges proposal \cite{Niebler2018}, in that it gives
+somewhat analogous to the C++ Ranges proposal \cite{Niebler2018}, in that it gives
 users a general way to describe operations over sequences, while optimizing by
 avoiding storage of temporary intermediate sequences.
 
 \section{Lessons Learned from Efforts in Other Programming Languages}
 
+\subsection{LINPACK}
 
-Dongarra \footnote{\url{http://history.siam.org/oralhistories/dongarra.htm}}
+Dongarra\footnote{\cite{dongarra2005history}}
 gives an oral history of standardization of popular Fortran linear algebra
 libraries, including EISPACK and LINPACK.  LINPACK came later.  Here is a longer
-quote by Dongarra explaining LINPACK's choice to rely on the BLAS:
+quote from this oral history explaining LINPACK's choice to rely on the BLAS:
 
 \begin{quote}
   Since linear systems have perhaps a broader impact, LINPACK was
@@ -165,62 +196,68 @@ quote by Dongarra explaining LINPACK's choice to rely on the BLAS:
   form the computational core of LINPACK; they are the vector operations that
   are going to be done over and over again in the package. The BLAS were a set
   of standard routines which were formed right before LINPACK was really kicked
-  off, and we made a decision to use them. \footnote{Id}
+  off, and we made a decision to use them.
 \end{quote}
 
 In so far as possible, the project wrote one version of the algorithms for four
 different data types (two different real precisions and two different complex
 precisions), and generated Fortran code for each of the four data types from
-this “abstract” representation.  It may make sense to talk about High
-Performance Fortran (HPF) \cite{Kennedy2007,Kennedy2011}. The language had
-support for distributed-memory parallel arithmetic operations on possibly
-distributed multidimensional arrays.  Compare also to the 2-D block cyclic data
-distributions that ScaLAPACK\cite{Blackford1997} supports for dense matrices.
-2-D block cyclic distributions include block and cyclic layouts, both 1-D and
-2-D, as special cases.
+this ``abstract'' representation.
+
+\subsection{High Performance Fortran}
+
+The High Performance Fortran (HPF) programming
+language\footnote{\cite{Kennedy2007,Kennedy2011}} inherited Fortran's
+native support for multidimensional arrays.  It added support for
+parallel arithmetic operations on these multidimensional arrays, that
+might be distributed in parallel over multiple processors.  Compare
+also to the 2-D block cyclic data distributions that
+ScaLAPACK\footnote{\cite{Blackford1997}} supports for dense matrices.
+2-D block cyclic distributions include block and cyclic layouts, both
+1-D and 2-D, as special cases.
 
 \section{Vector Spaces and Parallel Data Distributions}
 
-How can I tell if I’m allowed to add two vectors together, or multiply two
+How can I tell if I'm allowed to add two vectors together, or multiply two
 matrices?  Is it enough for their dimensions to be compatible?  Mathematicians
 would point out that two vector spaces might still differ, even if they have the
-same dimension or are otherwise isomorphic.  I can’t add a coordinate in 3-D
+same dimension or are otherwise isomorphic.  I can't add a coordinate in 3-D
 Euclidean space to a quadratic polynomial with real coefficients, just like I
-can’t add meters to seconds.  Like a physical unit, a vector space is a kind of
-“metadata.”  Equating all isomorphic vector spaces strips off their metadata.
+can't add meters to seconds.  Like a physical unit, a vector space is a kind of
+``metadata.''  Equating all isomorphic vector spaces strips off their metadata.
 
 A distributed-memory parallel data distribution is very much like a vector
 space. It takes an $N$-dimensional vector space and imposes a two-dimensional
 index $(p,I(p))$ on it, Here $p \in [0,P)$ is the parallel process index (the
-"rank", in MPI terms), and $I(p)$ is the set of indices that live on Process
+``rank,'' in MPI terms), and $I(p)$ is the set of indices that live on Process
 $p$. The only thing that would make this a finite-dimensional vector space is
 the field over which the entries of a vector are defined. Even if two vectors
 $x$ and $y$ have the same dimension $N$, if the two vectors have different
 parallel distributions, I can't add them together without communication.
-"Communication" here may mean different things on different parallel computers,
+``Communication'' here may mean different things on different parallel computers,
 but this generally means some combination of moving data between processors
 (either through a memory hierarchy, or across a network), and synchronization
 between processors. Communication is expensive relative to floating-point
-arithmetic \cite{Blackford1997}. It also affects the correctness, because it may
-introduce deadlock, depending on what surrounding code does. Thus, programmers
-like to see communication made explicit, even if it is hidden behind a
-convenient interface.
-
+arithmetic.\footnote{\cite{wulf1995hitting,Blackford1997}}
+It also affects correctness,
+because it may introduce deadlock,
+depending on what surrounding code does.
+Thus, programmers like to see communication made explicit,
+even if it is hidden behind a convenient interface.
 
 Linear algebra libraries can make this easier for programmers through the
 abstract language of vector spaces.  For example, the library can let users
 construct and pass around a parallel distribution using the two-dimensional
-indexing structure $(p, I(p))$ mentioned above\footnote{ TODO cite any of
-various “memory wall” sources}.  Users then create
+indexing structure $(p, I(p))$ mentioned above.  Users then create
 matrices and vectors using distribution objects created in this way.  The
 library can forbid implicit arithmetic operations between different vector
-spaces, but can make data redistribution and/or “communicating” arithmetic
+spaces, but can make data redistribution and/or ``communicating'' arithmetic
 operations explicit.  Users can also get the data distributions out of a matrix
 or vector, and check themselves whether two different distributions are the
-same.  It’s easier to explain all this to users in the abstract language of
+same.  It's easier to explain all this to users in the abstract language of
 vector spaces.
 
-Even if I don’t care about distributed-memory parallelism, I may still care
+Even if I don't care about distributed-memory parallelism, I may still care
 about shared-memory parallelism (threads) and memory affinity.
 
 \section{A Matrix has Four Vector Spaces}
