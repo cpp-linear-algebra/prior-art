@@ -1,5 +1,7 @@
 # Prior Art for Linear Algebra - A LaTeX Document
 
+[![Build Status](https://travis-ci.org/cpp-linear-algebra/prior-art.svg?branch=master)](https://travis-ci.org/cpp-linear-algebra/prior-art)
+
 ## How to compile to PDF
 
 Ensure that you have LaTeX and Biber installed.
