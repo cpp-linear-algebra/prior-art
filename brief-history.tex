@@ -1,268 +1,1009 @@
-\chapter{Brief History of Linear Algebra Libraries in C++}
+\chapter{Lessons for C++ linear algebra library standardization}
 
-\section{Object-Oriented Numerics in the 1990s}
+When regular WG21 participants began discussing standardization of a
+linear algebra library, many features, issues, and terms came up that
+had appeared in linear algebra libraries many years before.  Some
+participants lacked familiarity with lessons learned from older
+projects, for example about separation of concerns between performance
+and accuracy.
 
-Linear algebra libraries in C++ at first evolved from the general category of
-``object-oriented programming.'' For example, the First annual Object-Oriented
-Numerics Conference (OON-SKI) took place in
-1993.\footnote{\url{https://www.hindawi.com/journals/sp/si/250702/}}
-Rogue Wave, a C++ compiler company, sponsored OON-SKI,
-so the conference logically focuses on work in C++.
-``Numerics'' here means ``numerical computation'' or ``scientific computing'':
-computations on large arrays of floating-point numbers, doing things like
-discretizing differential equations or statistical data analysis.\footnote{
-Authors use adjectives like ``numerical'' to describe scientific and engineering
-computation.}  The introduction to the corresponding journal special issue
+To avoid confusion and aid learning from history, we wrote this survey
+of lessons learned from linear algebra libraries and standardization
+efforts, in C++ and other languages (especially Fortran).  The latter
+focuses on the BLAS \cite{BLAS-standard}, LINPACK
+\cite{dongarra1979linpack}, and LAPACK \cite{LAPACK-Users-Guide}
+libraries, with their long and successful history and frequent use in
+C++ linear algebra libraries and applications.  This survey also puts
+early C++ linear algebra libraries into a larger historical context,
+to help expose motivations for design decisions.
+
+This document does \emph{not} attempt a comprehensive survey of C++
+linear algebra libraries.  Furthermore, the authors freely admit that
+their background in scientific and engineering computation will
+introduce bias.  The point is not to claim objectivity or
+completeness, but rather to tell some stories that could help guide
+the development of a standard C++ linear algebra library.  To this
+end, one of the authors, Mark Hoemmen, will include anecdotes from his
+experiences working in the Trilinos C++ project
+\cite{heroux2005trilinos} since 2010.  The authors also include oral
+histories that they collected circa 2018 from a POOMA project
+developer, Chris Luchini \cite{hoemmen2018history}, as well as an
+interview of Jack Dongarra taken for the Society of Industrial and
+Applied Mathematics in 2005 \cite{dongarra2005history}.  Oral
+histories also carry subjectivity, but nonetheless can help readers
+understand design motivations.
+
+We begin with Section \ref{S:90s}, an overview of 1990's trends in
+computer hardware and applications that shaped early C++ linear
+algebra libraries.  Section \ref{S:features} highlights features of
+C++ linear algebra libraries, both historical and current, that we
+think should guide development of a standard library.  Section
+\ref{S:other-langs} surveys lessons learned from the BLAS, LINPACK,
+and LAPACK.  Finally, Section \ref{S:other-standards} talks about
+other standardization efforts that extend the BLAS.
+
+\section{1990's trends leading to C++ linear algebra libraries}
+\label{S:90s}
+
+Two key features of modern C++ -- templates, and the Standard Template
+Library -- both evolved in the 1990's.  That time also spawned other
+trends concurrent to and possibly shaping the development of early C++
+linear algebra libraries.  Surveying these trends can help us see why
+we might want such libraries in the first place, and what motivated
+the libraries' design decisions.  
+
+We begin with object-oriented numerics in Section \ref{SS:90s:OON}.
+Section \ref{SS:90s:demo} talks about the democratization of
+high-performance computing, and Section \ref{SS:90s:multiphysics}
+about increasing complexity in numerical simulations.  We finish with
+the democratization of computer graphics in Section
+\ref{SS:90s:graphics}.
+
+\subsection{Object-Oriented Numerics}
+\label{SS:90s:OON}
+
+Summary: C++ library developers eagerly applied object-oriented
+programming to numerical computation, including numerical linear
+algebra.  This made libraries easier to use and more reusable.
+Developers learned to use expression templates to avoid performance
+issues of na\"ive encapsulation.  They also introduced a new interface
+design antipattern by failing to factor classes by responsibility.
+
+Linear algebra libraries in C++ at first evolved from the general
+category of ``object-oriented programming'' (OOP).  One can see the
+explosion of interest in so-called ``object-oriented numerics'' by the
+large variety of conferences that sprang up in the
+mid-1990's.\footnote{See e.g.,
+  \url{http://www.math.unipd.it/~michela/OP.htm#conferences}.}  For
+example, the First annual Object-Oriented Numerics Conference
+(OON-SKI) took place in 1993.\footnote{See
+  \url{https://www.hindawi.com/journals/sp/si/250702/}.} Rogue Wave, a
+C++ compiler company, sponsored OON-SKI, so the conference logically
+focuses on work in C++.  ``Numerics'' here means ``numerical
+computation'' or ``scientific computing'': computations on large
+arrays of floating-point numbers, doing things like simulating the
+physical world or analyzing large quantities of data statistically.
+
+Numerical library developers of the time saw OOP as a way to ``keep
+the CPU-time constant while reducing the human time
+drastically'' \cite{arge1996oon}.  OOP's encourages modularity and
+encapsulation, and thus simplifies testing and reuse of software
+components. It lets developers create ``flexible applications that can
+be easily extended\dots.  In short, OOP encourages computer
+implementations of mathematical abstractions'' \cite{arge1996oon}.
+
+\subsubsection{Early lessons learned}
+
+Summary: in the early 1990's, C++ developers working on
+object-oriented numerics had already learned the following lessons:
+\begin{itemize}
+\item Libraries want users to write linear algebra expressions in code
+  that look as much like mathematical notation as possible.
+\item C++ linear algebra libraries can encapsulate some of the details
+  of getting good performance, including parallel computation.
+\item Na\"ive abstraction can hurt performance.
+\item C++ expression templates can help improve performance while
+  enabling interfaces that look like mathematical notation.
+\end{itemize}
+
+The introduction to the journal special issue for OON-SKI 1993
 described the phenomenon of ``object-oriented numerics'' as follows:
-
 \begin{quote}
-  \ldots [W]e are observing the emergence of a subdiscipline: the use of
-  object-oriented techniques in numerics. But what we are really seeing is
-  something even more profound: finally rejoining of scientific computing with
-  the science of computers. Traditionally, programming has been done by
-  engineers, physicists and mathematicians with little or no training in
-  computer science. Now, however, we are seeing an infusion of ideas coming from
-  computer science world into the scientific computing world, brining along
-  modern ideas on how to structure complex numerical code. Object-oriented
-  techniques is merely one of many such ideas \cite{Vermeulen1993}.
+  \ldots [W]e are observing the emergence of a subdiscipline: the use
+  of object-oriented techniques in numerics. But what we are really
+  seeing is something even more profound: finally rejoining of
+  scientific computing with the science of computers. Traditionally,
+  programming has been done by engineers, physicists and
+  mathematicians with little or no training in computer science. Now,
+  however, we are seeing an infusion of ideas coming from [the]
+  computer science world into the scientific computing world, bringing
+  along modern ideas on how to structure complex numerical
+  code. Object-oriented techniques is [sic] merely one of many such
+  ideas \cite{Vermeulen1993}.
 \end{quote}
+The introduction talks about issues like needing to teach compilers
+how to fuse loops and avoid temporaries when doing overloaded-operator
+arithmetic on arrays in C++. It also shows the existence of C++
+libraries for a variety of applications, including a library of
+multidimensional arrays, and the integration of C++ with
+distributed-memory parallel computation.  This shows that C++
+developers working on object-oriented numerics had already learned the
+lessons mentioned in the summary above.
 
-The introduction talks about the issues like needing to teach compilers how to
-fuse loops and avoid temporaries when doing overloaded-operator arithmetic on
-arrays in C++. It also shows the existence of C++ libraries for a variety of
-applications, including a library of multidimensional arrays, and the
-integration of C++ with distributed-memory parallel computation.
+\subsubsection{Antipattern: Classes with too many responsibilities}
 
-One can see the explosion of interest in ``object-oriented numerics'' by the large
-variety of conferences that sprang up in the mid-1990's.\footnote{See e.g.,
-\url{http://www.math.unipd.it/~michela/OP.htm#conferences}.} Interest died
-down later, but this perhaps reflects the stage in mathematical software development
-where users came to accept externally developed libraries as part of their
-applications. In the United States, this may correspond to the
-Department of Energy's Accelerated Strategic Computing Initiative
-(ASCI) program, which was founded in 1996.\footnote{\cite{messina1996asci}}
-An important part of ASCI was ``[s]oftware design and development''
-for complicated ``multi-physics scientific applications.''
-Before ASCI, experience with such software development was ``limited to a few
-isolated projects.'' ASCI aimed to ``carry out multiple substantial simulation
-projects that will provide proofs of principle, at scale, of software development
-methodologies and frameworks that provide portability, extensibility, modularity,
-and maintainability while delivering acceptable performance.''
+Summary: Some early object-oriented numerics libraries have objects
+that can be in many different states, and many mutating instance
+methods with state-dependent preconditions.  This is an antipattern
+that adds complexity for both users and developers.  Application of
+the One Responsibility Rule and Idiomatic use of the modern C++ type
+system can correct this without sacrificing performance.
 
-Another contribution to the development of C++ linear algebra
-libraries may have been the ``killer micros'' revolution of the early
-1990's.  Killer micros were consumer-grade, low-cost microprocessors
-whose performance threatened and eventually overtook that of expensive
-vector supercomputers.\footnote{\cite{killermicros1991}} This
-revolution disrupted Fortran's dominance and let developers write more
-complicated codes.  Vector supercomputers like the Cray 1 depended on
-custom vectorizing Fortran compilers for good performance.  ``Scalar''
-code ran much more slowly on the Cray 1 than vectorized code, and
-getting code to vectorize took careful dialog with the compiler.
-Killer micros had less optimized hardware, but also had performance
-less sensitive to software design.  Hardware performance improvements
-tracked the 18-month Moore's Law curve, so users could just wait for
-the next processor generation, instead of expensively optimizing their
-code.  This gave developers more freedom to use languages other than
-Fortran, and to write more complicated codes that depended less on
-vectorization.  Simultaneously, new distributed-memory parallel
-computers emerged, along with new languages to program them.  For
-example, the technical report describing Connection Machine's CM-1
-only mentions one programming language: *Lisp, an ANSI Common Lisp
-derivative.\footnote{\cite{kahle1989cm1}} Applications running on CM-2
-also used C*, a parallel superset of ANSI C.  Other distributed-memory
-parallel computers of the era favored C and offered C++ compilers.
-Library-oriented approaches to parallel computing, like PVM and MPI,
-came with C as well as Fortran bindings.  The switch from Fortran and
-the increasing complexity of software made C++ and richer library
-abstractions more attractive.
+It's easy to take the phrase ``object-oriented programming'' for
+granted, as equivalent to ``modern'' or ``not old fashioned.''
+Proponents of object-oriented numerics contrasted their interfaces
+with old-fashioned Fortran code: routines with cryptically short names
+that take dozens of arguments and have thousands of lines of code, and
+single objects with state scattered over many separate
+variables \cite{arge1996oon}.  Object-oriented interfaces
+grouped together state into nouns (e.g., ``matrix,'' ``vector'') and
+verbs (e.g., ``dot product,'' ``matrix-vector multiply'') that users
+found self-documenting.
 
-\section{Templates}
+This is overall a good thing.  For example, contrast ScaLAPACK's
+parallel dense LU factorization interface, with its long list of
+mysterious arguments and complicated parallel distribution setup
+boilerplate, with the clean interfaces to the same functionality in
+the Elemental \cite{poulson2013elemental} or Global Arrays
+\cite{GlobalArrays} libraries.  However, a common design antipattern
+in early object-oriented numerics libraries, is to let an object of a
+single type have many possible states, with many mutating instance
+methods whose preconditions depend on the object's state.\footnote{See
+  e.g., \cite[p. 6]{arge1996oon}.  It's a bit unfair to pick on this
+  one source, as the authors can think of many examples, including
+  codes on which the authors work.}
 
-C++ had a reputation for poor performance compared with Fortran. Even developers
-willing to write C++ in ``numerical'' codes considered it better to use C++ has a
-high-level coordination language, and reserve lower-level languages like C for
-tight loops.\footnote{\cite{Arge1997}} Developers saw C++ templates, in particular
-expression templates, as an optimization technique that could close the
-performance gap. Expression templates would let developers write compact,
-abstract code that ``looks like math,'' yet optimizes by fusing loops and avoiding
-temporaries. For example, the Dr.\ Dobbs article\footnote{\cite{dobbsblitz1997}}
-on the Blitz++ library,\footnote{\cite{blitz2005}} written by the
-library's author, focuses on expression templates for vector operations.
+This approach seems natural for many scientific and engineering
+applications, that have a small number of ``objects'' representing
+large memory allocations that the application modifies in place.
+However, we consider this an ``antipattern'' for three reasons:
+\begin{enumerate}
+\item The resulting classes violate the One Responsibility
+  Rule.\footnote{See e.g.,
+    \url{http://wiki.c2.com/?OneResponsibilityRule}.}
+\item Users and library developers both find it hard to keep in mind
+  what operations are valid on an object at what times.
+\item This approach fails to use C++'s type system and language
+  features to help make the current state obvious to users.
+\end{enumerate}
+What we mean by the third point above, is that a library could
+represent state transitions as \emph{type} transitions, that consume
+an object of the old type to produce an object of the new type.
+``Consuming'' an object could happen via move construction.  C++ has
+``smart pointers'' that the library could use to let ownership of
+large memory allocations pass from the old object to the new one,
+without need for reallocation and copying.
+
+As an example of this antipattern, consider sparse matrices
+(\texttt{Epetra\_CrsMatrix}) in the Trilinos project's Epetra linear
+algebra library \cite{heroux2005trilinos}.  One creates an Epetra
+sparse matrix by giving its constructor an object representing the
+parallel distribution of its rows.  At that point, the matrix is
+literally empty.  One then calls mutating methods on the matrix to
+insert sparse matrix entries, one or more at a time.  After one is
+done inserting, one must call the matrix's \texttt{FillComplete}
+method in order to prepare the matrix for linear solves.  The matrix's
+type stays the same through all of these mutations.  Its type tells
+one nothing about what operations are currently legal on the object.
+For example, one can only change the matrix's sparsity structure
+\emph{before} calling \texttt{FillComplete}, and one can only solve
+linear systems with the matrix \emph{after} \texttt{FillComplete}.
+The matrix class has several different constructors besides the one
+mentioned here, and the set of valid pre-\texttt{FillComplete}
+operations on the matrix (e.g., whether one is allowed to change its
+sparsity structure, or whether one needs to use local or global column
+indices when changing entries) depends entirely on which constructor
+one uses.  Changing anything inside this class is risky, since most
+unit tests and code exercise only common cases that do not cover all
+states.  It would have been better for Epetra to have had separate
+classes to represent various kinds of ``half-baked matrix'' vs.\ a
+``fully baked'' matrix.  
+
+Note that even though the Sparse BLAS interface standard gives
+matrices to users by integer handle rather than by instance of a C++
+class, it shares the same property that the handle does not change
+after the equivalent of \texttt{FillComplete}
+\cite[pp. 129--30]{BLAS-standard}.
+
+\subsection{Democratization of high-performance computing}
+\label{SS:90s:demo}
+
+A phenomenon we call the ``democratization of high-performance
+computing'' may have also contributed to the development of C++ linear
+algebra libraries.  This phenomenon has three parts.  First,
+high-performance, lower-cost workstations let users solve more
+problems without resorting to expensive ``big iron.''\footnote{This is
+  part of the ``killer micros'' revolution.  Killer micros were
+  consumer-grade, low-cost microprocessors whose performance
+  threatened and eventually overtook that of expensive vector
+  supercomputers \cite{killermicros1991}.} Workstation hardware tracked
+the 18-month Moore's Law performance curve, so users could just wait
+for the next processor generation, instead of expensively optimizing
+their code.  This gave developers more freedom to write more
+complicated codes.  In turn, this moved them towards programming
+languages like C++, that aid encapsulation and larger-scale software
+architecture.\footnote{Fortran 90 has modules, but no ``instances of a
+  class.''  Fortran 2003 has features more like C++ instance methods
+  and polymorphism.  Note, however, that Fortran compilers tend to lag
+  behind the latest Fortran standard, much more than C++ compilers lag
+  behind the latest C++ standard.  The authors' general experience
+  with relying on Fortran 2003 features has been poor.  For example,
+  the use of these features in the ForTrilinos project proved
+  unsustainable, and drove a shift back to assuming a modest subset of
+  Fortran 90 on the Fortran side of this interface to the C++ linear
+  algebra library Trilinos.}
+
+Second, distributed-memory parallel computers emerged.  These new
+systems did not rely on custom vectorizing Fortran compilers, as did
+the older generation of expensive vector supercomputers.  Some of
+these systems did not even have a Fortran compiler, or strongly
+favored other programming languages.\footnote{For example, the
+  technical report describing Connection Machine's CM-1 only mentions
+  one programming language: *Lisp, an ANSI Common Lisp derivative
+  \cite{kahle1989cm1}.  Applications running on CM-2 also used C*, a
+  parallel superset of ANSI C.  CM-2 only later added CM Fortran, an
+  extension of Fortran, in 1991 \cite[p. 7]{Kennedy2007}.  Other
+  distributed-memory parallel computers of the era favored C and
+  offered C++ compilers.  Library-oriented approaches to parallel
+  computing, like PVM and MPI, came with C as well as Fortran
+  bindings.}  New systems had new programming models anyway, which
+encouraged writing new libraries in languages like C++.
+
+Third, distributed-memory parallel computation and standard
+programming models made it cheaper and easier to build
+high-performance computers with large memory capacities.  The rapid
+increase in workstation performance meant that users often only
+reached for ``supercomputers'' when they need to solve problems too
+big to fit on a single workstation.  Techniques like Network of
+Workstations let users assemble a parallel computer with a large
+memory, out of the large number of inexpensive workstations they
+already had \cite{anderson1995case}.  Standard parallel programming
+models like MPI\footnote{The Message Passing Interface, whose Version
+  1.0 came out in 1994.} and OpenMP\footnote{A standard for
+  directives-based shared-memory parallel programming, whose C and C++
+  interface came out in 1997.} made Fortran less important and
+simplified writing standard libraries.  The emerging World Wide Web in
+turn accelerated such libraries' promulgation.
+
+\subsection{Increasing complexity in numerical simulations}
+\label{SS:90s:multiphysics}
+
+Concurrent with the above trends was an increasing demand for more
+complex numerical simulations.  The United States Department of
+Energy's Accelerated Strategic Computing Initiative (ASCI) program,
+founded in 1996 \cite{messina1996asci}, is one example of a program
+that helped spur this demand.  An important part of ASCI was
+``[s]oftware design and development'' for complicated ``multi-physics
+scientific applications.''  Before ASCI, experience with such software
+development was ``limited to a few isolated projects.''  ASCI aimed to
+``carry out multiple substantial simulation projects that will provide
+proofs of principle, at scale, of software development methodologies
+and frameworks that provide portability, extensibility, modularity,
+and maintainability while delivering acceptable performance''
+\cite{messina1996asci}.
+
+\subsection{Democratization of computer graphics}
+\label{SS:90s:graphics}
+
+The 1990's also saw a standardization of programming models for
+computer graphics.  For example, OpenGL 1.0 came out in 1992
+\cite{OpenGL-history}, and DirectX not long after.\footnote{See, e.g.,
+  the following overview of the history of OpenGL and Direct3D:
+  \url{https://news.ycombinator.com/item?id=2711231}.} Along with this
+came new hardware and instruction sets, like MMX \cite{mittal1997mmx}
+and 3DNow! \cite{oberman1999amd}, for accelerating graphics operations
+on consumer processors.  Computer graphics depends heavily on
+performing many small dense linear algebra operations.  This is a use
+case that historically did not cross over much with non-graphics
+scientific computation.  However, the scientific computing community
+is starting to show more interest in so-called ``batched'' linear
+algebra interfaces for performing many small dense operations in
+parallel \cite{dongarra2016batched}.
+
+\subsection{Summary of 1990's trends}
+\label{SS:90s:summary}
+
+A massive change in high-performance computer architectures and
+programming models led software developers to start using C++ for
+linear algebra libraries.  Concurrently, increasing interest in
+computer graphics, and the availability of dedicated instruction sets
+for accelerating primitive operations needed for graphics, stirred a
+growing interest in linear algebra outside of traditional scientific
+and engineering computing circles.  C++ linear algebra library
+developers discovered that na\"ive encapsulation could have a
+performance cost, and that C++ techniques like expression templates
+could help reduce or eliminate this cost.
+
+\section{Features of C++ linear algebra libraries}
+\label{S:features}
+
+In this section, we highlight common features of early C++ linear
+algebra libraries, that we think express good lessons learned for any
+C++ linear algebra library standardization effort.
+
+\subsection{Templates to improve performance}
+\label{SS:features:templates}
+
+In summary:
+\begin{itemize}
+\item C++ code had a poor reputation for performance, compared with
+  optimized C or Fortran code.
+\item C++ templates, including expression templates, helped close the
+  ``performance gap'' with optimized Fortran code.
+\item C++ compilers of the 1990's did not necessarily have complete or
+  correct implementations of templates.  Some linear algebra libraries
+  excluded templates as a result.
+\item Compilers are better at compiling templates now, so we don't
+  have to be afraid to use them.  However, we need to respect concerns
+  about compilation time.
+\item With expression templates, users must be careful using
+  \texttt{auto} for the left-hand side of an expression assignment.
+\end{itemize}
+
+C++ had a reputation for poor performance compared with Fortran. Even
+developers willing to write C++ in ``numerical'' codes considered it
+better to use C++ as a high-level coordination language, and reserve
+lower-level languages like C or Fortran for tight loops.\footnote{See
+  \cite{Arge1997}.  The Epetra linear algebra library in the Trilinos
+  project \cite{heroux2005trilinos} has optional Fortran
+  implementations of sparse matrix times multiple dense vectors at a
+  time, since it found them faster than C++.  In 2010--11, one of the
+  authors found Fortran versions of dense QR factorization kernels
+  faster than equivalent C++ versions \cite{hoemmen2011comm}.}
+Developers saw C++ templates, in particular expression templates, as
+an optimization technique that could close the performance
+gap. Expression templates would let developers write compact, abstract
+code that ``looks like math,'' yet optimizes by fusing loops and
+avoiding temporaries. For example, the Dr.\ Dobbs article
+\cite{dobbsblitz1997} on the Blitz++ library \cite{blitz2005}, written
+by the library's author, focuses on expression templates for vector
+operations.
 
 Developers also recognized the cost of virtual method calls in C++,
 especially in inner tight loops, and used templates to reduce the cost
 of run-time polymorphism.  For example, the Bernoulli Generic Matrix
-Library uses the ``Barton-Nackman trick,''\footnote{\cite{Barton1994}}
+Library uses the ``Barton-Nackman trick'' \cite{Barton1994},
 a special case of the ``Curiously Recurring Template Pattern,'' to
 turn run-time polymorphism into compile-time polymorphism.\footnote{In
-  \cite{Mateev2000}, authors cite \cite{Veldhuizen2000}}
+  \cite{Mateev2000}, authors cite \cite{Veldhuizen2000}.} This pattern
+shows up in other C++ linear algebra libraries; for example, Eigen
+uses it for expression base classes.\footnote{See
+  \url{http://eigen.tuxfamily.org/dox/TopicClassHierarchy.html}.}
 
-Early libraries that relied on templates suffered due to incomplete compiler
-implementations. For example, Blitz++'s installation process exercises the
-compiler to test language feature compliance. Its User's Guide recommends that
-if the compiler ``doesn't have member templates and enum computations, just give
-up.''\footnote{See Section 1.4.3 of \cite{blitz2005}.} A comparable library,
-POOMA (Parallel Object-Oriented Methods and
-Applications),\footnote{\url{http://www.nongnu.org/freepooma/tutorial/introduction.html}}
-pushed the boundaries of what the available C++
-compilers could handle. Chris Luchini, a POOMA developer, recalls that the
-project exposed many compiler bugs.\footnote{\cite{hoemmen2018history}}
-Many compilers lagged behind the C++ standard,
-only implemented a subset of features,
-and generated slow code.\footnote{\cite{Mateev2000}}
+Early libraries that relied on templates suffered due to incomplete
+compiler implementations. For example, Blitz++'s installation process
+exercises the compiler to test language feature compliance. Its User's
+Guide recommends that if the compiler ``doesn't have member templates
+and enum computations, just give up.''\cite[Section 1.4.3]{blitz2005}
+A comparable library, POOMA (Parallel Object-Oriented Methods and
+Applications),\footnote{See
+  \url{http://www.nongnu.org/freepooma/tutorial/introduction.html}.}
+pushed the boundaries of what the available C++ compilers could
+handle. Chris Luchini, a POOMA developer, recalls that the project
+exposed many compiler bugs \cite{hoemmen2018history}.  Many compilers
+lagged behind the C++ standard, only implemented a subset of features,
+and generated slow code \cite{Mateev2000}.
 
-Software for scientific computing may need to build with several different
-compilers and run on different kinds of hardware. Lack of consistently complete
-implementations of templates challenged portability requirements and restricted
-adoption. For example, in the Trilinos software project, a requirement to
-support a C++ compiler with incomplete template support drove the project to
-forbid templates in its foundational linear algebra library, Epetra.\footnote{\cite{hoemmen2018history}}
+Software for scientific computing may need to build with several
+different compilers and run on different kinds of hardware. Lack of
+consistently complete implementations of templates challenged
+portability requirements and restricted adoption. For example, in the
+Trilinos software project, a requirement to support a C++ compiler
+with incomplete template support drove the project to forbid templates
+in its foundational linear algebra library, Epetra
+\cite{hoemmen2018history}.
 
-\section{POOMA}
+One of the authors, Mark Hoemmen, has had experience reducing compile
+times and compiler memory usage of the Trilinos
+\cite{heroux2005trilinos} and Kokkos\footnote{See
+  \url{https://github.com/kokkos/kokkos}.} projects.  He has put
+months and months of developer time into efforts like the following:
+\begin{itemize}
+\item explicit template instantiation;
+\item splitting explicit instantiations into separate files, sometimes
+  automatically, through build system scripts; and
+\item reducing the number of separate instantiations of a templated
+  class that add no value, because they generate identical code.
+\end{itemize}
+Indiscriminate use of templates can increase compile times, both by
+preventing implementation hiding, and by proliferating instantiations.
+Compilers sometimes generate slower code when a compilation unit is
+too complicated or takes too long to build, since compilers want to
+bound the time and memory they use.  However, neither of these
+discourage most developers these days from using templated functions
+and classes in the C++ Standard Template Library.  We think it is
+possible and good to use templates, but developers need to think about
+compilation time.  Users must also take responsibility for this, by
+designing interfaces to hide implementations as much as possible, and
+breaking up long compilation units.
+
+Expression templates may hinder use of \texttt{auto} for the left-hand
+side of expressions, and users need to be careful returning
+expressions from a function without first assigning them to some
+concrete linear algebra type.  This is because the type to which the
+expression evaluates, is not necessarily a concrete matrix or vector
+or other linear algebra object.  It may be some expression type, that
+may hold references to concrete linear algebra objects.\footnote{See
+  e.g., \url{http://eigen.tuxfamily.org/dox/TopicPitfalls.html}.}
+Returning the expression may result in dangling references, if the
+concrete linear algebra objects to which the expression refers have
+fallen out of scope.  C++ copy elision\footnote{See
+  \url{https://en.cppreference.com/w/cpp/language/copy_elision}.}
+makes it impossible for a library to detect and report user code that
+creates expressions on the left-hand side, such as \texttt{auto z = x
+  + y}.
+% This is because such code does not invoke the expression class'
+% \texttt{operator=} method.
+
+\subsection{Generic iteration over sequences}
+\label{SS:features:iteration}
+
+Summary: Developers discovered that C++ let them express generic
+iteration over sequences in a high-level way, and generate optimized
+code from the high-level specification.  A linear algebra or tensor
+library may want to expose iteration over multidimensional sequences
+or index spaces.  There are different ways of expressing this.
+
+As experience with C++ templates increased, some developers applied
+them to more radical code optimizations.  For example, the Bernoulli
+Generic Matrix Library used templates to generate optimized sparse
+matrix codes from a high-level specification \cite{Ahmed2000}.
+Bernoulli used a kind of relational algebra (described in detail in
+the PhD dissertation) that gives users a generic way to describe
+operations over sequences, while optimizing by avoiding storage of
+temporary intermediate sequences.  One can think of this as a
+generalization of C++ iterators, and as a precursor to the C++ Ranges
+proposal \cite{Niebler2018}.
+
+By the time one of the authors (Mark Hoemmen) encountered the
+Bernoulli project in the early 2000's, it had abandoned C++ templates
+in favor of a code generation framework based on OCaml (or some other
+ML derivative).  Our guess is that using OCaml to generate C code,
+instead of using C++ templates, avoided C++ compiler correctness and
+performance issues that were more common in the early 2000's.
+Nevertheless, this suggests a lesson learned: the more ambitiously
+complex a C++ library, the more programmer effort and expertise it
+requires, and the bigger the risk for good performance on many
+platforms.
+
+The Kokkos C++ library\footnote{See
+  \url{https://github.com/kokkos/kokkos}.} uses a different approach
+for parallel iteration over multidimensional index ranges.  Users
+specify the index ranges.  They may also specify nondefault features
+as template parameters, like the computer architecture, the iteration
+order, and whether to use tiling with compile-time sizes.  Kokkos uses
+this specification to generate parallel code.  An important lesson
+learned from Kokkos is that users need control over multidimensional
+iteration order in order to get best performance.
+
+Other approaches to multidimensional sequence iteration include
+Einstein notation for tensor summation.
+%
+% TODO cite existing work on this
+% 
+
+\subsection{Engines: Implementation polymorphism}
+\label{SS:features:engine}
+
+Summary: C++ template partial specialization lets library developers
+write linear algebra interfaces that are polymorphic on their
+implementations.  This is an extension point, like the
+\texttt{Allocator} template parameter in C++ Standard Library objects.
+Library authors can and have used this for polymorphism on things like
+the parallelization mechanism, the allocator, and the storage layout.
 
 The POOMA (Parallel Object-Oriented Methods and Applications) project
 was most active 1998-2000. POOMA's goal was to support structured grid
-and dense array computations. As per oral history\footnote{See
-  \cite{hoemmen2018history}.} and POOMA's documentation, the team had
-a particular interest in SGI Origin shared-memory parallel
-computers. POOMA shares features with more recently linear algebra
+and dense array computations. As per oral history
+\cite{hoemmen2018history} and POOMA's documentation\footnote{See
+  \url{http://www.nongnu.org/freepooma/tutorial}.}, the team had a
+particular interest in SGI Origin shared-memory parallel
+computers. POOMA shares features with more recent linear algebra
 libraries, such as polymorphism on storage layout and parallel
 programming model, so it is worth studying for historical lessons.
 
-POOMA's main data structure is Array. Array has three template parameters:
-the rank (the number of dimensions),
-the entry type (e.g., \texttt{double}),
-and the ``engine.''
-Engines are about storage of data.
-They correspond somewhat to the Accessor policy
-in the \texttt{mdspan} multidimensional array proposal.\footnote{\cite{P0009r8}}
-An engine implements access to entries of the Array.
-Entries could actually exist in some storage somewhere,
-or they could be computed from indices and not actually stored. Engines also
-describe parallel distribution somewhat -- e.g., through the MultiPatch engine.\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-04.html}}
+POOMA's main data structure is Array, a multidimensional array. Array
+has three template parameters: the rank (the number of dimensions),
+the entry type (e.g., \texttt{double}), and the ``Engine.''  Engines
+express where and how data are stored.  They implement access to
+entries of the Array.  For example, depending on the POOMA Engine
+used, Array entries could either actually exist in some storage
+somewhere, or they could be computed on the fly at access time from
+their indices.  POOMA Engines (in particular, the MultiPatch engine)
+could also describe distributed-memory parallel data distribution.
 
-POOMA's Internals and Ranges let users construct possibly strided
-multidimensional index ranges. These features let users write very general
-indexed loops, like in the ZPL programming language.\footnote{\cite{Chamberlain1998}}
-However, POOMA users had to work a bit harder on distributed-memory parallel
-systems, to expose ``guard regions'' with redundant storage on process boundaries.\footnote{This essentially means that POOMA did not do implicit boundary
-  exchange.  High-performance computing experts like to expose and reify the
-  parallel distribution, and any redistribution operations. This helps them
-  avoid communication and data movement, and makes parallel synchronization
-  semantics clear.  This is also a bit of a reaction to High-Performance
-  Fortran, where even copying from one array to another could require parallel
-  synchronization.
-}
+This feature of implementation polymorphism by template specialization
+shows up in many other libraries.  For example, the \texttt{mdspan}
+multidimensional array proposal \cite{P0009r8} has an Accessor policy,
+an optional template parameter that implements access to the entries
+of the \texttt{mdspan}.  The Kokkos\footnote{See
+  \url{https://github.com/kokkos/kokkos}.} library's \texttt{View}
+multidimensional array class has ``execution space'' and ``memory
+space'' template parameters, that control where data live (allocation
+and deallocation) and how operations execute in parallel over those
+data.
 
-The POOMA project had to ``discover'' experimentally how C++ templates work, and
-develop their own idioms. For example, the developers learned that C++
-does not permit templating on return type and then deducing the return type.\footnote{\url{http://www.nongnu.org/freepooma/tutorial/tut-03.html}}
-As mentioned above, POOMA developers also had to explore the limits of compiler
-correctness and performance.
+\subsection{Deducing return type of linear algebra expressions}
+\label{SS:features:return-type-deduction}
 
-\section{C++ for More Radical Optimizations}
+Summary: Figuring out the right return type of a linear algebra
+expression is a nonobvious design decision, that early C++ libraries
+have already encountered.
 
-As experience with C++ templates increased, some developers applied them to more
-radical code optimizations.  For example, the Bernoulli Generic Matrix Library
-used templates to generate optimized sparse matrix codes from a high-level
-specification.\footnote{\cite{Ahmed2000} By the time, I (Mark Hoemmen)
-encountered the Bernoulli project, it had abandoned C++ code generation in
-favor of OCaml (or some other ML derivative)-based code generation framework.
-My guess is that avoiding intermediate high-level C++ step improved run-time
-performance and avoided compiler correctness issues.}  Bernoulli used a kind of
-relational algebra (described in detail in the PhD dissertation) that is
-somewhat analogous to the C++ Ranges proposal \cite{Niebler2018}, in that it gives
-users a general way to describe operations over sequences, while optimizing by
-avoiding storage of temporary intermediate sequences.
+One recent discussion point that has proven controversial, is how to
+deduce the return type of an arithmetic expression involving linear
+algebra objects with mixed element types.  For example, suppose that I
+have a matrix \texttt{A} with elements of type
+\texttt{complex<float>}, and I write the expression \texttt{4.2 * A}.
+Should I get a matrix with elements of type \texttt{complex<double>},
+since that avoids loss of accuracy when multiplying the
+\texttt{double} $4.2$ by \texttt{complex<float>}?  What if I really
+want \texttt{complex<float>}, for its lower storage requirements or
+for compatibility with other interfaces?  It's easy to write
+mixed-type expressions like \texttt{4.2 * A}, but not necessarily easy
+to decide the type to which they should convert.
 
-\section{Lessons Learned from Efforts in Other Programming Languages}
+This is a simple example of a general problem: allowing arithmetic
+expressions of linear algebra objects of mixed types means that a
+library must decide the return type of such expressions.  The
+aforementioned POOMA project encountered this general issue.  For
+example, they learned the hard way that C++ does not permit
+``templating on return type.''\footnote{See
+  \url{http://www.nongnu.org/freepooma/tutorial/tut-03.html}.}
 
-\subsection{LINPACK}
+\subsection{Lazy evaluation may not always pay}
+\label{SS:features:lazy}
 
-Dongarra\footnote{\cite{dongarra2005history}}
-gives an oral history of standardization of popular Fortran linear algebra
-libraries, including EISPACK and LINPACK.  LINPACK came later.  Here is a longer
-quote from this oral history explaining LINPACK's choice to rely on the BLAS:
+Summary: Implementations of expression templates for linear algebra
+expressions may lose performance and even get the wrong answer, if
+they evaluate all expressions lazily.  Fixing this in the library
+turns library developers into compiler authors and introduces a
+complexity / performance trade-off.
 
-\begin{quote}
-  Since linear systems have perhaps a broader impact, LINPACK was
-  going to a wider audience, and we felt that it would have a larger acceptance.
-  This package was designed at a time when the biggest computers available were
-  the vector computers. The vector supercomputers were just coming onto the
-  scene, and the package was designed with vector computers in mind, so the
-  package was designed to rely on an underlying set of routines called the BLAS
-  (the Basic Linear Algebra Subprograms). The BLAS are a set of kernels which
-  form the computational core of LINPACK; they are the vector operations that
-  are going to be done over and over again in the package. The BLAS were a set
-  of standard routines which were formed right before LINPACK was really kicked
-  off, and we made a decision to use them.
-\end{quote}
+C++ expression templates are one way to implement \emph{lazy
+  evaluation} of arithmetic expressions involving linear algebra
+objects.  Natural implementations of expression templates lead to
+fully lazy evaluation: No actual computation happens until assignment.
+However, multiple C++ linear algebra libraries have learned the lesson
+that fully lazy evaluation does not always pay.  For example, for
+algorithms with reuse, like dense matrix-matrix multiply, lazy
+evaluation can give incorrect results for expressions where the output
+alias the input (like \texttt{A = A * A} where \texttt{A} is a
+matrix).  This is why the Eigen library's expressions have an option
+to turn off lazy evaluation, and do so by default for some kinds of
+expressions.  Furthermore, allocating a temporary result and/or eager
+evaluation of subexpressions may be faster in some cases.\footnote{See
+  \url{http://eigen.tuxfamily.org/dox/TopicLazyEvaluation.html}.}
+This is true not necessarily just for expressions whose computations
+have significant reuse, like matrix-matrix multiply, but also for some
+expressions that ``stream'' through the entries of vectors or
+matrices.  For example, fusing too many loops may thrash the cache or
+cause register spilling, so deciding whether to evaluate eagerly or
+lazily may require hardware-specific
+information \cite{siek2008build}. It's possible to encode
+many such compilation decisions in a pure C++ library with
+architecture-specific parameters.\footnote{See, e.g., the following
+  2013 Eigen presentation:
+  \url{http://downloads.tuxfamily.org/eigen/eigen_CGLibs_Giugno_Pisa_2013.pdf}.}
+However, this burdens the library with higher implementation
+complexity and increased compilation time.  Library designers
+may prefer a simpler interface that excludes expressions with reuse
+(that have correctness issues with lazy evaluation) and lets users
+decide where temporaries get allocated.
 
-In so far as possible, the project wrote one version of the algorithms for four
-different data types (two different real precisions and two different complex
-precisions), and generated Fortran code for each of the four data types from
-this ``abstract'' representation.
+\subsection{Vector spaces and parallel data distributions}
+\label{SS:features:spaces}
 
-\subsection{High Performance Fortran}
+Summary: A ``vector space'' is a useful generalization of the number
+of rows or columns of a matrix.  It can pay to expose this
+generalization to library users, though a tensor library may find this
+abstraction less useful.
 
-The High Performance Fortran (HPF) programming
-language\footnote{\cite{Kennedy2007,Kennedy2011}} inherited Fortran's
-native support for multidimensional arrays.  It added support for
-parallel arithmetic operations on these multidimensional arrays, that
-might be distributed in parallel over multiple processors.  Compare
-also to the 2-D block cyclic data distributions that
-ScaLAPACK\footnote{\cite{Blackford1997}} supports for dense matrices.
-2-D block cyclic distributions include block and cyclic layouts, both
-1-D and 2-D, as special cases.
+Linear algebra libraries all must figure out what to do if users
+attempt to perform operations on objects with incompatible dimensions.
+For example, it does not make sense to add together two vectors $x$
+and $y$ with different lengths, or to multiply two dense matrices $A$
+and $B$ if $A$'s number of columns does not equal $B$'s number of
+rows.  The only complication is whether the library has this
+information at compile time, or must check at run time.
 
-\section{Vector Spaces and Parallel Data Distributions}
+This gets more complicated, though, if we generalize ``compatible
+dimensions'' to the mathematical idea of a ``vector space.''  Two
+vectors might have the same dimensions, but it still might not make
+sense to add them together.  For example, I can't add a coordinate in
+3-D Euclidean space to a quadratic polynomial with real coefficients,
+just like I can't add meters to seconds.  Two vectors from different
+vector spaces may not be addable together, even though the two spaces
+have the same dimension or are otherwise isomorphic.  Like a physical
+unit, a vector space is a kind of ``metadata.''  Equating all
+isomorphic vector spaces strips off their metadata.
 
-How can I tell if I'm allowed to add two vectors together, or multiply two
-matrices?  Is it enough for their dimensions to be compatible?  Mathematicians
-would point out that two vector spaces might still differ, even if they have the
-same dimension or are otherwise isomorphic.  I can't add a coordinate in 3-D
-Euclidean space to a quadratic polynomial with real coefficients, just like I
-can't add meters to seconds.  Like a physical unit, a vector space is a kind of
-``metadata.''  Equating all isomorphic vector spaces strips off their metadata.
+The ``vector space as metadata'' idea also can apply to parallel data
+distributions.  We use the term \emph{parallel data distribution} to
+refer either to a particular distribution of data over a
+distributed-memory parallel computer, or to the memory affinity of
+data on shared-memory parallel computers with nonuniform memory access
+(NUMA).  It may even be mathematically correct to add two vectors from
+the same (mathematical) vector space but with different parallel
+distributions.  However, doing so would require communication.
+``Communication'' here may mean different things on different parallel
+computers, but generally implies some combination of moving data
+between processors (either through a memory hierarchy, or across a
+network), and synchronization between processors.  Communication is
+expensive relative to floating-point arithmetic
+\cite{wulf1995hitting,Blackford1997}.  It also affects correctness,
+because it may introduce deadlock, depending on what surrounding code
+does.  Thus, programmers like to see communication made explicit, even
+if it is hidden behind a convenient interface.
 
-A distributed-memory parallel data distribution is very much like a vector
-space. It takes an $N$-dimensional vector space and imposes a two-dimensional
-index $(p,I(p))$ on it, Here $p \in [0,P)$ is the parallel process index (the
-``rank,'' in MPI terms), and $I(p)$ is the set of indices that live on Process
-$p$. The only thing that would make this a finite-dimensional vector space is
-the field over which the entries of a vector are defined. Even if two vectors
-$x$ and $y$ have the same dimension $N$, if the two vectors have different
-parallel distributions, I can't add them together without communication.
-``Communication'' here may mean different things on different parallel computers,
-but this generally means some combination of moving data between processors
-(either through a memory hierarchy, or across a network), and synchronization
-between processors. Communication is expensive relative to floating-point
-arithmetic.\footnote{\cite{wulf1995hitting,Blackford1997}}
-It also affects correctness,
-because it may introduce deadlock,
-depending on what surrounding code does.
-Thus, programmers like to see communication made explicit,
-even if it is hidden behind a convenient interface.
+A natural way for a linear algebra library to expose parallel data
+distributions to users is by folding the distribution into a vector
+space.  For example, the library's vector space would not only give
+the ``global'' dimension of a vector, but would express which vector
+entries ``live'' on which parallel processes / in which NUMA memory
+affinity regions.  Linear algebra libraries in the Trilinos C++
+software project \cite{heroux2005trilinos} do this (e.g., in Epetra
+and Tpetra, a vector space / distribution is called a ``Map''), and
+they give users a way to query vector spaces for ``sameness.''
 
-Linear algebra libraries can make this easier for programmers through the
-abstract language of vector spaces.  For example, the library can let users
-construct and pass around a parallel distribution using the two-dimensional
-indexing structure $(p, I(p))$ mentioned above.  Users then create
-matrices and vectors using distribution objects created in this way.  The
-library can forbid implicit arithmetic operations between different vector
-spaces, but can make data redistribution and/or ``communicating'' arithmetic
-operations explicit.  Users can also get the data distributions out of a matrix
-or vector, and check themselves whether two different distributions are the
-same.  It's easier to explain all this to users in the abstract language of
-vector spaces.
+One issue with this approach is how to generalize it in a usable way
+to tensors.  Tensors have more spaces than matrices.  Users may find
+it hard to keep track of which matter for the operations that they
+want to perform.
 
-Even if I don't care about distributed-memory parallelism, I may still care
-about shared-memory parallelism (threads) and memory affinity.
+\section{Lessons learned from Fortran libraries}
+\label{S:other-langs}
 
-\section{A Matrix has Four Vector Spaces}
+We begin with Section \ref{SS:other-langs:LINPACK}.  This uses Jack
+Dongarra's oral history of the LINPACK project and examples from other
+libraries to show that one of the most important features of a linear
+algebra library, is that it is generic on the matrix element type.  In
+Section \ref{SS:other-langs:BLAS}, the example of the BLAS illustrates
+that it's helpful to separate libraries or levels of abstraction, by
+whether their developers are more likely to be numerical linear
+algebra experts or performance tuning experts.  Finally, the example
+of High Performance Fortran in Section \ref{SS:other-langs:HPF}
+teaches that an interface should make expensive operations explicit,
+whenever possible.
 
-Matrices fulfill two different roles.  First, matrices are 2-D data containers.
-Their rows have a data distribution, and their columns do also.  Second, I can
-do matrix-vector products with a matrix.  This makes a matrix a function from
-its domain vector space to its range vector space.
+% , and that good library interface abstractions can accomplish
+% most if not all of what a language can do.
+
+\subsection{LINPACK: One can write algorithms
+  generic on the matrix element type}
+\label{SS:other-langs:LINPACK}
+
+Summary: The LINPACK project shows that it's possible to write linear
+algebra algorithms that are generic on the matrix element type, even
+in languages (like Fortran 77) that lack polymorphism.  Genericity is
+one of the most important features that a C++ linear algebra library
+can offer.
+
+Dongarra gives an oral history \cite{dongarra2005history} of
+standardization of popular Fortran linear algebra libraries, including
+EISPACK and LINPACK.  LINPACK \cite{dongarra1979linpack} is a library
+for solving dense linear systems, and EISPACK \cite{garbow1974eispack}
+is for solving dense eigenvalue problems.  The two libraries together
+are precursors to LAPACK \cite{anderson1990lapack}, that combines
+functionality from both.  Dongarra explains that LINPACK wrote one
+version of all the algorithms (in so far as possible) for four
+different matrix element types.  In C++ terms, the types are
+\texttt{float}, \texttt{double}, \texttt{complex<float>}, and
+\texttt{complex<double>}.  LINPACK developers then used string
+processing scripts to generate Fortran code for each of the four data
+types from this ``abstract'' representation.  LINPACK and its
+successor LAPACK use functionality comparable to C++'s
+\texttt{numeric\_limits} in order to implement linear algebra
+algorithms that are correct and accurate with respect to
+floating-point arithmetic, without hard-coding floating-point traits
+directly into the algorithm \cite{P1370R0}.
+
+One of the authors, Mark Hoemmen, has been a Trilinos
+\cite{heroux2005trilinos} developer since 2010.  One of the most
+heavily used parts of Trilinos are the Teuchos BLAS and LAPACK
+wrappers.  These are very thin C++ wrappers over the BLAS and LAPACK,
+that are templated on the matrix element type (what Trilinos calls the
+\texttt{Scalar} type).  The only thing ``C++'' about them, and their
+main value, is that they let users write generic C++ code that uses
+BLAS and LAPACK functionality.  The wrappers have existed in more or
+less their current form for several years longer than the author's
+tenure as a Trilinos developer, yet few Trilinos developers complained
+and none actually offered a replacement.  This shows that a generic
+C++ BLAS and LAPACK binding might satisfy many users, even if it has
+no more features than the BLAS and LAPACK themselves.
+
+\subsection{BLAS: Draw the line between libraries
+  based on developer expertise}
+\label{SS:other-langs:BLAS}
+
+Summary: The BLAS (Basic Linear Algebra Subprograms) set a good
+precedent, by drawing the line between libraries based on whether
+developers are more likely to be numerical linear algebra experts or
+performance tuning experts.
+
+The BLAS (Basic Linear Algebra Subprograms) Technical Forum defines a
+standard Fortran 77, Fortran 95, and C interface for linear algebra
+operations \cite{BLAS-standard}.  The Standard was published in 2002
+and includes dense, banded, and sparse linear algebra operations.
+However, the heart of the BLAS is dense and banded linear algebra
+operations.  The BLAS in some form has been around since the 1970's
+\cite{lawson1979blas,dongarra2005history}, and its dense core has been
+in recognizably modern form since 1990 \cite{dongarra1990blas3}.
+
+One benefit of the BLAS is that it draws the line between libraries
+based on likely developer expertise.  Efficient BLAS implementation
+requires expertise in performance tuning and computer architecture,
+but not so much in linear algebra.  Accurate and efficient
+implementation of LINPACK and LAPACK calls for understanding numerical
+linear algebra and floating-point arithmetic.  The intent was that
+computer vendors would optimize the BLAS, and LAPACK would spent
+almost all of its time running inside the optimized BLAS \cite[``The
+BLAS as the Key to Portability'']{LAPACK-Users-Guide}.  That way,
+numerical linear algebra experts could get good performance by
+thinking about algorithms at a high level, e.g., by blocking to favor 
+operations with more reuse (``BLAS 3'').
+
+This boundary may be a bit fuzzy.  For example, BLAS implementations
+can contribute a lot to accuracy in floating-point arithmetic.  Thus
+justifies projects like mixed-precision BLAS \cite{lawn149} and
+Reproducible BLAS\footnote{See publications list here:
+  \url{https://bebop.cs.berkeley.edu/reproblas/}.}, and proofs that
+numerical linear algebra algorithms are numerically stable even if
+they use Strassen-like implementations of matrix-matrix multiply
+\cite{demmel2007fast}.  Furthermore, the set of core linear algebra
+operations may evolve over time, as computer architectures and
+algorithms evolve.  The version of the BLAS that LINPACK used only
+provided vector-vector operations (what later became known as ``BLAS
+1'') \cite{lawson1979blas}; this made sense at the time, because those
+were the right operations to optimize on vector computers.  As
+floating-point operations became much faster than memory operations
+\cite{wulf1995hitting} and computer architectures became cache based,
+algorithm developers realized that they needed to redesign matrix
+algorithms to reuse data better.  (One fruit of that redesign is the
+LAPACK project \cite{anderson1990lapack}.)  This motivated them to
+extend the original BLAS to support matrix-vector
+\cite{dongarra1988blas2} (``BLAS 2'') and matrix-matrix
+\cite{dongarra1990blas3} (``BLAS 3'') operations, that have more reuse
+than the original vector-vector operations.
+
+Even though the boundary between ``what belongs to BLAS'' and ``what
+belongs to LAPACK'' has shifted over time, both library developers and
+users appreciate that there is a boundary.
+
+\subsection{High Performance Fortran: Make expensive operations
+  explicit}\label{SS:other-langs:HPF}
+
+Summary: If a library (or language) makes time-consuming operations
+look no different than fast operations, then users might have trouble
+debugging performance issues.
+
+The High Performance Fortran (HPF) programming language
+\cite{Kennedy2007,Kennedy2011} inherited Fortran's native support for
+multidimensional arrays.  It added support for parallel arithmetic
+operations on these multidimensional arrays, that might be distributed
+in parallel over multiple processors.  Compare also to the 2-D block
+cyclic data distributions that ScaLAPACK \cite{Blackford1997} supports
+for dense matrices.  2-D block cyclic distributions include block and
+cyclic layouts, both 1-D and 2-D, as special cases.
+
+HPF had a number of issues that hindered its adoption.  One issue
+relating to language design, is that the ``the relationship between
+what the developer wrote and what the parallel machine executed [was]
+somewhat murky'' \cite[p. 13]{Kennedy2007}.  The language did not make
+clear what operations could result in expensive parallel
+communication.  This made it hard to diagnose suboptimal performance
+without dropping down to the parallel equivalent of assembly language
+(in this case, generated Fortran + MPI communication calls).
+
+An important lesson learned is that expensive operations should be
+explicit.  For example, distributed-memory parallel linear algebra
+libraries like Trilinos \cite{heroux2005trilinos} forbid arithmetic
+operations between vectors that do not have the same distribution,
+unless the user first explicitly invokes a data redistribution
+operation on one of the vectors.  Authors of a C++ standard linear
+algebra library will need to think about this.  For example, C++
+operator overloading is convenient, but it risks hiding computational
+expense behind the mask of simple arithmetic.
+
+One of HPF's motivations was to hide the details of distributed-memory
+parallel communication.  However, many distributed-memory parallel
+libraries and applications wrote to a lower-level programming model
+(e.g., MPI), but built higher-level library abstractions around it.
+For example, discretizations of partial differential equations that
+use finite-element or finite-volume method have a ``boundary
+exchange'' or ``ghost region exchange'' primitive, that communicates
+whatever data a parallel process needs in order to compute the next
+time step or nonlinear solve step.  Good library design hides almost
+all parallel communication behind a small number of library
+primitives, at least for applications that have regular communication
+patterns.
+
+\section{Other standardization efforts}
+\label{S:other-standards}
+
+Here, we briefly mention related linear algebra standardization
+efforts, the GraphBLAS (Section \ref{SS:other-standards:GraphBLAS})
+and Batched BLAS (Section \ref{SS:other-standards:batched}).  Should
+we consider those in scope for a standard C++ linear algebra library?
+We should at least know about them and make a conscious decision to
+include or exclude them.
+
+\subsection{GraphBLAS}
+\label{SS:other-standards:GraphBLAS}
+
+Summary: The GraphBLAS offers to make a generic sparse linear algebra
+library useful for implementing graph algorithms.  It requires custom
+matrix element types and custom arithmetic, that could impose
+interesting requirements on a linear algebra library.
+
+The GraphBLAS Forum is a recent, ongoing effort to standardize
+``building blocks for graph algorithms in the language of linear
+algebra.''\footnote{\url{http://graphblas.org/index.php?title=Graph_BLAS_Forum};
+  see also the brief position paper \cite{mattson2013standards}.}  The
+point of the GraphBLAS is that it's both possible and performant to
+express many graph algorithms using a small number of linear algebra
+primitives, such as sparse matrix-matrix multiply.  One can think of
+the GraphBLAS as a subset of traditional sparse BLAS functionality,
+but with a few ``wrinkles'' that differ from what a BLAS implementer
+might expect.  For example:
+\begin{itemize}
+\item Vectors are ``sparse by default''; for example, one can express
+  one step of breadth-first search by a sparse matrix-vector multiply,
+  but this is only efficient if the vector is stored sparsely.
+\item Users need to be able to define custom arithmetic types, and
+  custom arithmetic operations to replace plus, times, and zero (the
+  arithmetic identity and multiplicative annihilator).  Desired
+  arithmetic types may be real numbers (with different operations),
+  Boolean, or subsets of a set of integers \cite{kepner2016math}.  The
+  latter is interesting because na\"ive implementations might store
+  subsets in a way that requires dynamic allocation.
+\end{itemize}
+
+Many C++ linear algebra libraries permit custom arithmetic types and
+operations.  We argue in Section \ref{SS:other-langs:LINPACK} that
+genericity on the matrix and vector element types is one of the most
+important features that a C++ linear algebra library can offer.
+However, how ``generic'' is ``generic''?  The Eigen library assumes
+that the usual arithmetic operations (including division) work, and
+imposes some other interface requirements.\footnote{See
+  \url{http://eigen.tuxfamily.org/dox/TopicCustomizing_CustomScalar.html}.}
+Other libraries that claim to be generic have similar requirements.
+
+One of the authors, Mark Hoemmen, has some experience with this in the
+Tpetra linear algebra library \cite{baker2012tpetra} in the Trilinos
+project \cite{heroux2005trilinos}.  Tpetra's vector and matrix data
+structures are templated on the element type (\texttt{Scalar}), but
+Tpetra is more restrictive about the set of types it permits than
+other libraries might be.  While this is may be a design flaw in
+Tpetra, it's likely that other existing C++ linear algebra libraries
+have this restriction as well.  Thus, understanding the reasons for
+the restriction could help expose pitfalls when attempting to use an
+existing library to implement the GraphBLAS.  Here are some reasons
+why Tpetra does not permit arbitrary matrix entry types:
+\begin{itemize}
+\item Tpetra needs the types to work in CUDA code.  This excludes
+  types that do dynamic memory allocation inside, such as the ``na\"ve
+  implementation of subsets of a set of integers'' type mentioned
+  above.  A small number of Trilinos developers go through a lot of
+  trouble to make Tpetra work for a few types that have run-time
+  sizes, where all instances of the type have the same run-time size.
+\item Tpetra has some coupling with downstream preconditioners and
+  iterative solvers.  These generally assume that the type of matrix
+  and vector entries implements (mathematical) field operations like
+  division.  The ``custom arithmetic'' mentioned above is more like a
+  mathematical semiring; for example, it only requires plus and times.
+  Tpetra does permit specializations of vectors and matrices to have a
+  different ``dot product result type'' than the matrix / vector entry
+  type; this could be a path forward for refactoring.
+\item Tpetra needs to be able to communicate instances of the matrix
+  entry type using MPI (the Message Passing Interface for
+  distributed-memory parallel programming).  Permitting types that
+  have different run-time sizes would likely require more
+  communication (more volume or more rounds or both).  Tpetra's
+  communication layer would become more complicated, since Tpetra
+  would need to optimize for the common case of built-in types like
+  \texttt{double}.
+\end{itemize}
+
+The GraphBLAS does have a reference C++ implementation.\footnote{See
+  \url{https://github.com/cmu-sei/gbtl}.}  However, any
+parallelization would need to think carefully about the implications
+of custom arithmetic.  These might include load balancing (for types
+with different run-time sizes), thread safety and scalability of the
+type, and whether the type could work as a reduction result.  (The
+OpenMP standard only recently started allowing custom types for
+reduction results, for example.)
+
+\subsection{Batched BLAS}
+\label{SS:other-standards:batched}
+
+Summary: Batched BLAS is useful, but has many more interface options.
+A data structure like \texttt{mdspan} \cite{P0009r8} might be useful
+for exposing interfaces generic on layout.
+
+We mentioned ``batched'' linear algebra interfaces briefly above.
+These perform many small dense operations in an optimized way,
+generally with the intention of parallelization
+\cite{dongarra2016batched}.  Different vendors (e.g.,
+Intel\footnote{See
+  \url{https://software.intel.com/en-us/articles/introducing-batch-gemm-operations}.}
+and NVIDIA\footnote{See
+  \url{https://docs.nvidia.com/cuda/cublas/index.html}.}) have
+different interfaces, and the interface matters a lot for performance.
+Relton et al.\ survey different interface options
+\cite{relton2016comparison}.
+
+The \texttt{mdspan} \cite{P0009r8} multidimensional array data
+structure could give users a way to store a batch of small dense
+matrices in an optimized layout.  It also could give a linear algebra
+library a way to express interface polymorphism.
+
+\section{Conclusions}
+\label{S:conclusions}
+
+The authors offer here some subjective views on the goals of a C++
+linear algebra standardization effort.
+
+A standard C++ linear algebra library will likely have many users who
+are not practitioners of traditional ``scientific and engineering
+computing.''  They might be interested in computer graphics, gaming,
+computer vision, machine learning, or graph algorithms.  Some users
+care about matrices and vectors, others about tensors, and still
+others about quaternions and octernions.  Nevertheless, we think all
+these fields have enough in common that a unified effort can pay off.
+
+A linear algebra library will want to expose iteration over
+multidimensional sequences or index spaces, much like the C++ Standard
+Template Library or Ranges do with single-dimensional sequences.
+Einstein index notation for tensors is a general way of expressing
+this, but is not the only way.  Users want to access the entries of
+vectors, matrices, and tensors, so we will need to come up with good
+abstractions for this.
+
+Users want code to look as much like mathematical notation as
+possible.  This can have a performance cost, but libraries can reduce
+or eliminate that cost using techniques like expression templates.
+Nevertheless, developers must take care to avoid pitfalls like
+incorrect use of \texttt{auto} with temporary expressions, and long
+build times.  Users also need to take responsibility for compilation
+time and memory issues by breaking up long compilation units.
+
+One of the most important lessons learned from the BLAS, LINPACK, and
+LAPACK, is that it pays to draw the boundaries between libraries based
+on the likely expertise of the developers who would work on each
+library.  For example, implementing ``inverse of a matrix'' accurately
+requires much more numerical linear algebra knowledge than
+implementing ``dot product of two vectors.''  Writing a fast dense
+matrix-matrix multiply takes much more knowledge about computer
+architecture than writing a reasonably efficient dense LU
+factorization.  C++ does put domain-specific knowledge into its
+Standard Library; the calendar and time zone library \cite{P0355r7}
+that was voted into C++20 is a good example.  Nevertheless, C++
+Standard Library developers, despite their fantastic talents,
+generally are not experts in numerical linear algebra.  This suggests
+that a C++ linear algebra library should carefully separate the
+operations whose implementation calls for numerical linear algebra
+expertise, from the more ``computer science-y'' operations.
+
+Examining the history of the BLAS Standard, and related
+standardization efforts like the GraphBLAS and Batched BLAS, can help
+us more consciously define the scope of a standard C++ linear algebra
+library.  Goals like ``generic on matrix element type'' or
+``zero-overhead abstraction'' have concrete implications on interface
+and implementation complexity, for example.
+
+We find it encouraging that C++ is seriously thinking about
+standardizing a linear algebra library, and hope that this essay
+contributes to that effort.
+
+
