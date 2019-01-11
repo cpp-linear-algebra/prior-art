@@ -948,6 +948,85 @@ structure could give users a way to store a batch of small dense
 matrices in an optimized layout.  It also could give a linear algebra
 library a way to express interface polymorphism.
 
+\section{Lessons learned from Python libraries}
+\label{S:Python}
+
+Scientists saw Python in the 2000s as an alternative for \texttt{Matlab}, itself
+ an alternative interpreted langage to Fortran. Despite not having native
+  support for multidimensional arrays, two main projects, \texttt{Numarray} and
+  \texttt{Numeric}, were merged by Travis Oliphant to create 
+  \texttt{Numpy}~\cite{oliphant2006numpy}. The communities behind
+  the two other projects soon merged.
+
+\subsection{Numpy}
+\label{S:Python:numpy}
+
+From the beginning of \texttt{Numpy}, the sister project 
+ \texttt{Scipy}~\cite{scipy2001} held most of the non-core features.
+ If Numpy contained the array itself as well as the basic mathematical 
+ operations, it still contained a few outside features (like FFT 
+ support) that where considered as being part of Scipy.
+
+Numpy provides several key features that Fortran and Matlab may
+ not always provide:
+ 
+\begin{itemize}  
+  \item a true multidimensional container that was partially integrated
+   inside Python 3,
+  \item a slice notation with \texttt{:}
+  \item broadcasting capabilities, meaning that all dimension sizes
+  don't have to match for an operation to be performed.
+\end{itemize}
+
+On top of this, all componentwise operations are executed in C with so-called
+ universal functions. This has made all simple operations very efficient
+ although not as efficient as they could have been in a compiled application.
+ Additional projects have been created to add a JIT layer to this (like Numba).
+
+\subsection{Array vs matrix}
+\label{S:Python:arraymatrix}
+
+One of the most known issues of Numpy was the creation of two 
+classes for data: \texttt{array}, which was a true multidimensional 
+array and \texttt{matrix} which was purely a 2D object.
+
+The first one was using the Hadamard product for the multiplication
+ operator, the second one use the matrix multiplication.
+  
+The consensus now is to use only \texttt{array} to avoid any confusion
+  for the user when using the two classes together. Python 3 introduced
+  a new operator to accommodate for the missing matrix multiplication
+  so that all typical operations of an array could be performed with 
+  operators.
+
+\subsection{The current langage of choice for data science and machine learning}
+\label{S:Python:currentlanguage}
+
+Python is currently the \texttt{de facto} language for data science and
+ machine learning. The features that are provided by the core language
+ (batteries included but also the readable notation) have made it 
+ unavoidable in the numerical landscape.
+ 
+ The other languages have not, as of today, been able to have
+  a community as big as Python's, which will make it a reference in the
+  domain for the years to come.
+
+\subsection{xtensor, a C++ equivalent to Numpy}
+\label{S:Python:xtensor}
+
+Quantstack has developed a C++ equivalent to Numpy named 
+ \texttt{xtensor}~\cite{xtensor}. It provides 3 different containers 
+ that add the static aspects of an array (fixed number of dimensions
+ and fixed size in a dimension), instead of just one.
+
+The basic operations are always componentwise (using the Hadamard
+ product for the multiplication operator), leaving the matrix product in 
+ another sister project.
+
+Despite being close to Numpy, the notation is far more cumbersome than 
+ the Python equivalent (missing matrix operator and slice operations).
+
+
 \section{Conclusions}
 \label{S:conclusions}
 
