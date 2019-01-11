@@ -50,7 +50,7 @@ Library -- both evolved in the 1990's.  That time also spawned other
 trends concurrent to and possibly shaping the development of early C++
 linear algebra libraries.  Surveying these trends can help us see why
 we might want such libraries in the first place, and what motivated
-the libraries' design decisions.  
+the libraries' design decisions.
 
 We begin with object-oriented numerics in Section \ref{SS:90s:OON}.
 Section \ref{SS:90s:demo} talks about the democratization of
@@ -74,7 +74,7 @@ category of ``object-oriented programming'' (OOP).  One can see the
 explosion of interest in so-called ``object-oriented numerics'' by the
 large variety of conferences that sprang up in the
 mid-1990's.\footnote{See e.g.,
-  \url{http://www.math.unipd.it/~michela/OP.htm#conferences}.}  For
+  \url{http://www.math.unipd.it/~michela/OP.htm\#conferences}.}  For
 example, the First annual Object-Oriented Numerics Conference
 (OON-SKI) took place in 1993.\footnote{See
   \url{https://www.hindawi.com/journals/sp/si/250702/}.} Rogue Wave, a
@@ -207,7 +207,7 @@ one uses.  Changing anything inside this class is risky, since most
 unit tests and code exercise only common cases that do not cover all
 states.  It would have been better for Epetra to have had separate
 classes to represent various kinds of ``half-baked matrix'' vs.\ a
-``fully baked'' matrix.  
+``fully baked'' matrix.
 
 Note that even though the Sparse BLAS interface standard gives
 matrices to users by integer handle rather than by instance of a C++
@@ -490,7 +490,7 @@ Other approaches to multidimensional sequence iteration include
 Einstein notation for tensor summation.
 %
 % TODO cite existing work on this
-% 
+%
 
 \subsection{Engines: Implementation polymorphism}
 \label{SS:features:engine}
@@ -750,7 +750,7 @@ computer vendors would optimize the BLAS, and LAPACK would spent
 almost all of its time running inside the optimized BLAS \cite[``The
 BLAS as the Key to Portability'']{LAPACK-Users-Guide}.  That way,
 numerical linear algebra experts could get good performance by
-thinking about algorithms at a high level, e.g., by blocking to favor 
+thinking about algorithms at a high level, e.g., by blocking to favor
 operations with more reuse (``BLAS 3'').
 
 This boundary may be a bit fuzzy.  For example, BLAS implementations
@@ -954,23 +954,23 @@ library a way to express interface polymorphism.
 Scientists saw Python in the 2000s as an alternative for \texttt{Matlab}, itself
  an alternative interpreted langage to Fortran. Despite not having native
   support for multidimensional arrays, two main projects, \texttt{Numarray} and
-  \texttt{Numeric}, were merged by Travis Oliphant to create 
+  \texttt{Numeric}, were merged by Travis Oliphant to create
   \texttt{Numpy}~\cite{oliphant2006numpy}. The communities behind
   the two other projects soon merged.
 
 \subsection{Numpy}
 \label{S:Python:numpy}
 
-From the beginning of \texttt{Numpy}, the sister project 
+From the beginning of \texttt{Numpy}, the sister project
  \texttt{Scipy}~\cite{scipy2001} held most of the non-core features.
- If Numpy contained the array itself as well as the basic mathematical 
- operations, it still contained a few outside features (like FFT 
+ If Numpy contained the array itself as well as the basic mathematical
+ operations, it still contained a few outside features (like FFT
  support) that where considered as being part of Scipy.
 
 Numpy provides several key features that Fortran and Matlab may
  not always provide:
- 
-\begin{itemize}  
+
+\begin{itemize}
   \item a true multidimensional container that was partially integrated
    inside Python 3,
   \item a slice notation with \texttt{:}
@@ -986,17 +986,17 @@ On top of this, all componentwise operations are executed in C with so-called
 \subsection{Array vs matrix}
 \label{S:Python:arraymatrix}
 
-One of the most known issues of Numpy was the creation of two 
-classes for data: \texttt{array}, which was a true multidimensional 
+One of the most known issues of Numpy was the creation of two
+classes for data: \texttt{array}, which was a true multidimensional
 array and \texttt{matrix} which was purely a 2D object.
 
 The first one was using the Hadamard product for the multiplication
  operator, the second one use the matrix multiplication.
-  
+
 The consensus now is to use only \texttt{array} to avoid any confusion
   for the user when using the two classes together. Python 3 introduced
   a new operator to accommodate for the missing matrix multiplication
-  so that all typical operations of an array could be performed with 
+  so that all typical operations of an array could be performed with
   operators.
 
 \subsection{The current langage of choice for data science and machine learning}
@@ -1004,9 +1004,9 @@ The consensus now is to use only \texttt{array} to avoid any confusion
 
 Python is currently the \texttt{de facto} language for data science and
  machine learning. The features that are provided by the core language
- (batteries included but also the readable notation) have made it 
+ (batteries included but also the readable notation) have made it
  unavoidable in the numerical landscape.
- 
+
  The other languages have not, as of today, been able to have
   a community as big as Python's, which will make it a reference in the
   domain for the years to come.
@@ -1014,16 +1014,16 @@ Python is currently the \texttt{de facto} language for data science and
 \subsection{xtensor, a C++ equivalent to Numpy}
 \label{S:Python:xtensor}
 
-Quantstack has developed a C++ equivalent to Numpy named 
- \texttt{xtensor}~\cite{xtensor}. It provides 3 different containers 
+Quantstack has developed a C++ equivalent to Numpy named
+ \texttt{xtensor}~\cite{xtensor}. It provides 3 different containers
  that add the static aspects of an array (fixed number of dimensions
  and fixed size in a dimension), instead of just one.
 
 The basic operations are always componentwise (using the Hadamard
- product for the multiplication operator), leaving the matrix product in 
+ product for the multiplication operator), leaving the matrix product in
  another sister project.
 
-Despite being close to Numpy, the notation is far more cumbersome than 
+Despite being close to Numpy, the notation is far more cumbersome than
  the Python equivalent (missing matrix operator and slice operations).
 
 
