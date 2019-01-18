@@ -1,5 +1,4 @@
-\documentclass[oneside,12pt,headings=optiontoheadandtoc,a4paper]{scrbook}
-%\documentclass[12pt,headings=optiontoheadandtoc]{article}
+\documentclass[12pt]{article}
 
 \usepackage{cpphelper}
 \usepackage[
@@ -13,23 +12,16 @@
             citestyle=alphabetic,backend=biber]{biblatex}
 \addbibresource{library.bib}
 
-
-\subject{}
-\subtitle{}
-\title{Prior Art for Linear Algebra}
-\author{}
-
+\title{Historical lessons for C++ linear algebra library standardization}
+\author{Mark Hoemmen, Jayesh Badwaik, and Matthieu Brucher}
 
 \begin{document}
-\frontmatter
 \maketitle
 
 \tableofcontents
-\mainmatter
 
 \input{brief-history}
 
-\backmatter
 \printbibliography %[heading=bibintoc]
 \end{document}
 

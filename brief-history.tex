@@ -1,37 +1,38 @@
-\chapter{Lessons for C++ linear algebra library standardization}
+\section{Introduction}
+\label{S:intro}
 
 When regular WG21 participants began discussing standardization of a
 linear algebra library, many features, issues, and terms came up that
-had appeared in linear algebra libraries many years before.  Some
-participants lacked familiarity with lessons learned from older
-projects, for example about separation of concerns between performance
-and accuracy.
-
-To avoid confusion and aid learning from history, we wrote this survey
-of lessons learned from linear algebra libraries and standardization
-efforts, in C++ and other languages (especially Fortran).  The latter
-focuses on the BLAS \cite{BLAS-standard}, LINPACK
+had appeared in linear algebra libraries many years before.  We were
+encouraged to see new proposals ``rediscovering'' good ideas, but we
+also wanted to make sure that participants had the chance to learn
+from history.  To this end, we wrote this survey of lessons learned
+from linear algebra libraries and standardization efforts, in C++ and
+other languages (including Fortran and Python).  Fortran discussions
+focus on the BLAS \cite{BLAS-standard}, LINPACK
 \cite{dongarra1979linpack}, and LAPACK \cite{LAPACK-Users-Guide}
 libraries, with their long and successful history and frequent use in
 C++ linear algebra libraries and applications.  This survey also puts
 early C++ linear algebra libraries into a larger historical context,
 to help expose motivations for design decisions.
 
-This document does \emph{not} attempt a comprehensive survey of C++
-linear algebra libraries.  Furthermore, the authors freely admit that
-their background in scientific and engineering computation will
-introduce bias.  The point is not to claim objectivity or
-completeness, but rather to tell some stories that could help guide
-the development of a standard C++ linear algebra library.  To this
-end, one of the authors, Mark Hoemmen, will include anecdotes from his
-experiences working in the Trilinos C++ project
-\cite{heroux2005trilinos} since 2010.  The authors also include oral
-histories that they collected circa 2018 from a POOMA project
-developer, Chris Luchini \cite{hoemmen2018history}, as well as an
-interview of Jack Dongarra taken for the Society of Industrial and
-Applied Mathematics in 2005 \cite{dongarra2005history}.  Oral
-histories also carry subjectivity, but nonetheless can help readers
-understand design motivations.
+This document does \emph{not} attempt a comprehensive survey of linear
+algebra libraries in any language.  Omission does not imply judgment.
+Furthermore, the authors freely admit that their background in
+scientific and engineering computation will introduce bias.  The point
+is not to claim objectivity or completeness, but rather to tell some
+stories that could help guide the development of a standard C++ linear
+algebra library.  To this end, one of the authors, Mark Hoemmen,
+includes anecdotes from his experiences working on the Trilinos C++
+project \cite{heroux2005trilinos} since 2010.  The authors also
+include oral histories that they collected circa 2018 from a POOMA
+project developer, Chris Luchini \cite{hoemmen2018history}, as well as
+an interview of Jack Dongarra taken for the Society of Industrial and
+Applied Mathematics in 2005 \cite{dongarra2005history}.  We also
+incorporate the fruits of discussion from many other contributors, not
+all of which we were able to credit here.  Oral histories also carry
+subjectivity, but nonetheless can help readers understand design
+motivations.
 
 We begin with Section \ref{S:90s}, an overview of 1990's trends in
 computer hardware and applications that shaped early C++ linear
@@ -39,8 +40,11 @@ algebra libraries.  Section \ref{S:features} highlights features of
 C++ linear algebra libraries, both historical and current, that we
 think should guide development of a standard library.  Section
 \ref{S:other-langs} surveys lessons learned from the BLAS, LINPACK,
-and LAPACK.  Finally, Section \ref{S:other-standards} talks about
-other standardization efforts that extend the BLAS.
+and LAPACK.  We describe some other standardization efforts that
+extend the BLAS in Section \ref{S:other-standards}.  Section
+\ref{S:Python} outlines experiences from the Python community.  We
+conclude in Section \ref{S:conclusions} with our opinions on what some
+goals of a C++ linear algebra standardization effort should be.
 
 \section{1990's trends leading to C++ linear algebra libraries}
 \label{S:90s}
@@ -838,7 +842,7 @@ we consider those in scope for a standard C++ linear algebra library?
 We should at least know about them and make a conscious decision to
 include or exclude them.
 
-\subsection{GraphBLAS}
+\subsection{GraphBLAS: Rewards of genericity}
 \label{SS:other-standards:GraphBLAS}
 
 Summary: The GraphBLAS offers to make a generic sparse linear algebra
@@ -927,77 +931,124 @@ reduction results, for example.)
 \subsection{Batched BLAS}
 \label{SS:other-standards:batched}
 
-Summary: Batched BLAS is useful, but has many more interface options.
-A data structure like \texttt{mdspan} \cite{P0009r8} might be useful
-for exposing interfaces generic on layout.
+Summary: ``Batched'' basic linear algebra operations, that solve many
+small dense problems at once, can improve performance of some
+libraries and applications.  Vendors offer implementations with
+different interface options, and a ``Batched BLAS'' standardization
+effort has begun.  The C++ library standardization effort should
+consider whether offering batched operations could help improve
+performance for primary use cases.
 
 We mentioned ``batched'' linear algebra interfaces briefly above.
 These perform many small dense operations in an optimized way,
-generally with the intention of parallelization
-\cite{dongarra2016batched}.  Different vendors (e.g.,
-Intel\footnote{See
+generally with the intention of parallelization and/or vectorization
+\cite{dongarra2016batched}.  Many applications that use dense linear
+algebra actually do many small, often independent dense operations.
+Scientific and engineering computing have plenty of examples, but the
+strong and growing interest in machine learning also calls for batched
+linear algebra.
+
+The interface of batched linear algebra operations matters a lot for
+performance, but may constrain generality.  For example, requiring a
+specific data layout and constraining all matrices to have the same
+dimensions makes vectorization easier, but applications in sparse
+multifrontal matrix factorizations may produce dense matrices of
+different dimensions.  Vendors like Intel\footnote{See
   \url{https://software.intel.com/en-us/articles/introducing-batch-gemm-operations}.}
 and NVIDIA\footnote{See
-  \url{https://docs.nvidia.com/cuda/cublas/index.html}.}) have
-different interfaces, and the interface matters a lot for performance.
-Relton et al.\ survey different interface options
-\cite{relton2016comparison}.
+  \url{https://docs.nvidia.com/cuda/cublas/index.html}.} have
+different interfaces with different levels of generality.  Relton et
+al.\ survey different interface options \cite{relton2016comparison}.
+A standardization effort began circa 2016,\footnote{See
+  \cite{dongarra2016batched} and \url{http://icl.utk.edu/bblas/}.}
+and continues with regular workshops and publications.
 
 The \texttt{mdspan} \cite{P0009r8} multidimensional array data
 structure could give users a way to store a batch of small dense
 matrices in an optimized layout.  It also could give a linear algebra
-library a way to express interface polymorphism.
+library a way to express interface polymorphism.  For example,
+\texttt{mdspan} supports different layouts.  An implementation could
+provide generic algorithms, but specialize for specific layouts.  Some
+layouts can express different ways to pack linear algebra objects that
+can help with vectorization.
 
 \section{Lessons learned from Python libraries}
 \label{S:Python}
 
-Scientists saw Python in the 2000s as an alternative for \texttt{Matlab}, itself
- an alternative interpreted langage to Fortran. Despite not having native
-  support for multidimensional arrays, two main projects, \texttt{Numarray} and
-  \texttt{Numeric}, were merged by Travis Oliphant to create
-  \texttt{Numpy}~\cite{oliphant2006numpy}. The communities behind
-  the two other projects soon merged.
+Summary: The Python programming language does not come with native
+linear algebra or multidimensional array support, but Numpy offers a
+library solution.  Users find Numpy's Fortran / MATLAB - style slice
+notation and its integration with many provided numerical algorithms
+attractive.  Many potential users of a C++ linear algebra library
+would be familiar with Python and Numpy.
+
+Scientists saw Python in the 2000s as an alternative for
+\texttt{MATLAB},\footnote{See
+  \url{https://www.mathworks.com/products/matlab.html}.}  MATLAB
+itself was written as a teaching tool that let students use EISPACK
+and LINPACK algorithms without needing to write Fortran programs.  See
+\cite{moler2004origins} for the history of MATLAB.  Its author, Cleve
+Moler, was also a coauthor of EISPACK and LINPACK.  MATLAB has
+influenced the design of multiple C++ linear algebra
+libraries,\footnote{See e.g., \url{http://arma.sourceforge.net/}.}
+and continues as a commercial product.
+
+Python is a general-purpose programming language that comes with many
+standard libraries.  This can make it easier for writing complete
+applications that, for example, interact with databases, access the
+internet, or generate web pages.  Python also comes built into many
+operating systems, without installation or licensing concerns.  While
+the language was not designed for numerical computation, its
+availability and ease of learning makes it attractive in that domain.
+Python lacks native support for multidimensional arrays, but
+developers stepped up with libraries.  Travis Oliphant merged two main
+projects, \texttt{Numarray} and \texttt{Numeric}, to create
+\texttt{Numpy}~\cite{oliphant2006numpy}. The communities behind the
+two other projects soon merged.
 
 \subsection{Numpy}
 \label{S:Python:numpy}
 
 From the beginning of \texttt{Numpy}, the sister project
- \texttt{Scipy}~\cite{scipy2001} held most of the non-core features.
- If Numpy contained the array itself as well as the basic mathematical
- operations, it still contained a few outside features (like FFT
- support) that where considered as being part of Scipy.
+\texttt{Scipy}~\cite{scipy2001} held most of the non-core features.
+If Numpy contained the array itself as well as the basic mathematical
+operations, it still contained a few outside features (like support
+for fast Fourier transforms) that were considered as being part of
+Scipy.
 
-Numpy provides several key features that Fortran and Matlab may
- not always provide:
-
+Numpy provides several key features:
 \begin{itemize}
   \item a true multidimensional container that was partially integrated
    inside Python 3,
-  \item a slice notation with \texttt{:}
+  \item a ``slice'' (subarray) notation with \texttt{:}, and
   \item broadcasting capabilities, meaning that all dimension sizes
-  don't have to match for an operation to be performed.
+    don't have to match for an operation to be performed.
 \end{itemize}
 
-On top of this, all componentwise operations are executed in C with so-called
- universal functions. This has made all simple operations very efficient
- although not as efficient as they could have been in a compiled application.
- Additional projects have been created to add a JIT layer to this (like Numba).
+Numpy executes all component-wise operations in C with so-called
+``universal functions.''  This has helped Numpy achieve most of the
+efficiency of compiled C code.  Projects like Numba\footnote{See
+  \url{http://numba.pydata.org/}.} go further, by using just-in-time
+compilation to translate a subset of Python and Numpy directly to
+machine code.
 
-\subsection{Array vs matrix}
+\subsection{Array vs.\ matrix}
 \label{S:Python:arraymatrix}
 
-One of the most known issues of Numpy was the creation of two
-classes for data: \texttt{array}, which was a true multidimensional
-array and \texttt{matrix} which was purely a 2D object.
+One of the most known issues of Numpy is that it has two different
+fundamental data containers:
+\begin{itemize}
+\item \texttt{array}, a true multidimensional array; and
+\item \texttt{matrix}, purely a two-dimensional object.
+\end{itemize}
+The two containers interpreted the multiplication operator in two
+mathematically different ways: \texttt{array} used the Hadamard
+product, and \texttt{matrix} used matrix-matrix multiplication.
 
-The first one was using the Hadamard product for the multiplication
- operator, the second one use the matrix multiplication.
-
-The consensus now is to use only \texttt{array} to avoid any confusion
-  for the user when using the two classes together. Python 3 introduced
-  a new operator to accommodate for the missing matrix multiplication
-  so that all typical operations of an array could be performed with
-  operators.
+The consensus now is to avoid confusion by using only \texttt{array}.
+Python 3 introduced a new operator for matrix-matrix multiplication
+with \texttt{array}.  This lets users perform all typical array
+operations with operators.
 
 \subsection{The current langage of choice for data science and machine learning}
 \label{S:Python:currentlanguage}
@@ -1015,17 +1066,16 @@ Python is currently the \texttt{de facto} language for data science and
 \label{S:Python:xtensor}
 
 Quantstack has developed a C++ equivalent to Numpy named
- \texttt{xtensor}~\cite{xtensor}. It provides 3 different containers
- that add the static aspects of an array (fixed number of dimensions
- and fixed size in a dimension), instead of just one.
+\texttt{xtensor}~\cite{xtensor}. It provides 3 different containers
+that add the static aspects of an array (fixed number of dimensions
+and fixed size in a dimension), instead of just one.
 
 The basic operations are always componentwise (using the Hadamard
- product for the multiplication operator), leaving the matrix product in
- another sister project.
+product for the multiplication operator), leaving the matrix product
+in another sister project.
 
 Despite being close to Numpy, the notation is far more cumbersome than
- the Python equivalent (missing matrix operator and slice operations).
-
+the Python equivalent (missing matrix operator and slice operations).
 
 \section{Conclusions}
 \label{S:conclusions}
@@ -1084,5 +1134,38 @@ and implementation complexity, for example.
 We find it encouraging that C++ is seriously thinking about
 standardizing a linear algebra library, and hope that this essay
 contributes to that effort.
+
+\section{Acknowledgements}
+\label{S:ack}
+
+Our thanks to the community of developers who came together for this
+discussion.  We had our first phone meeting on October 10,
+2018,\footnote{See minutes with participants list here:
+  \url{https://github.com/cpp-linear-algebra/cpp-linear-algebra-brainstorming/blob/master/minutes/2018_10_10__telecon.txt}.}
+with subsequent teleconferences as well as a face-to-face session at
+the San Diego WG21 meeting.  Michael Wong gave of his time to help
+organize and lead meetings, and to offer the SG14 e-mail list as a
+discussion forum.  Thanks to Guy Davidson and Bob Steagall for boldly
+offering their proposal, ``Towards Standardization of Linear
+Algebra,'' as a first draft.  It's heartening to note that these two
+authors approached the topic from different angles: Bob, from his
+experiences writing software to solve linear least-squares problems
+arising in functional magnetic resonance imaging, and Guy, from his
+work on the 2-D graphics proposal \cite{P0267r8}.  Nasos Iliopoulos
+and John Michopoulos contributed their experiences as uBlas
+developers\footnote{See e.g., \cite{iliopoulos2011ublascl}.}  and with
+C++ techniques for implementing Einstein (tensor index) notation.  Cem
+Bassoy also contributed to the discussion of the value of accepting
+tensors as an initial part of this library.  Many others offered
+useful insights and suggestions that enriched this paper and will
+certainly enrich the library.  This paper will undergo further
+revision, so if we omitted your name, please let us know.
+
+One of the authors is an employee of Sandia National Laboratories.
+Sandia National Laboratories is a multimission laboratory managed and
+operated by National Technology \& Engineering Solutions of Sandia,
+LLC, a wholly owned subsidiary of Honeywell International, Inc., for
+the U.S. Department of Energy's National Nuclear Security
+Administration under contract DE--NA0003525.
 
 
