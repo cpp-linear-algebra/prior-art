@@ -152,7 +152,7 @@ Summary: Some early object-oriented numerics libraries have objects
 that can be in many different states, and many mutating instance
 methods with state-dependent preconditions.  This is an antipattern
 that adds complexity for both users and developers.  Application of
-the One Responsibility Rule and Idiomatic use of the modern C++ type
+the One Responsibility Rule and idiomatic use of the modern C++ type
 system can correct this without sacrificing performance.
 
 It's easy to take the phrase ``object-oriented programming'' for
@@ -160,16 +160,16 @@ granted, as equivalent to ``modern'' or ``not old fashioned.''
 Proponents of object-oriented numerics contrasted their interfaces
 with old-fashioned Fortran code: routines with cryptically short names
 that take dozens of arguments and have thousands of lines of code, and
-single objects with state scattered over many separate
-variables \cite{arge1996oon}.  Object-oriented interfaces
-grouped together state into nouns (e.g., ``matrix,'' ``vector'') and
-verbs (e.g., ``dot product,'' ``matrix-vector multiply'') that users
-found self-documenting.
+single objects with state scattered over many separate variables
+\cite{arge1996oon}.  Object-oriented interfaces grouped together state
+into nouns (e.g., ``matrix,'' ``vector'') and verbs (e.g., ``dot
+product,'' ``matrix-vector multiply'') that users found
+self-documenting.
 
 This is overall a good thing.  For example, contrast ScaLAPACK's
 parallel dense LU factorization interface, with its long list of
 mysterious arguments and complicated parallel distribution setup
-boilerplate, with the clean interfaces to the same functionality in
+boilerplate, with the concise interfaces to the same functionality in
 the Elemental \cite{poulson2013elemental} or Global Arrays
 \cite{GlobalArrays} libraries.  However, a common design antipattern
 in early object-oriented numerics libraries, is to let an object of a
@@ -178,7 +178,6 @@ methods whose preconditions depend on the object's state.\footnote{See
   e.g., \cite[p. 6]{arge1996oon}.  It's a bit unfair to pick on this
   one source, as the authors can think of many examples, including
   codes on which the authors work.}
-
 This approach seems natural for many scientific and engineering
 applications, that have a small number of ``objects'' representing
 large memory allocations that the application modifies in place.
