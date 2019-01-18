@@ -8,8 +8,8 @@ encouraged to see new proposals ``rediscovering'' good ideas, but we
 also wanted to make sure that participants had the chance to learn
 from history.  To this end, we wrote this survey of lessons learned
 from linear algebra libraries and standardization efforts, in C++ and
-other languages (including Fortran and Python).  Fortran discussions
-focus on the BLAS \cite{BLAS-standard}, LINPACK
+other languages (including Fortran, MATLAB, and Python).  Fortran
+discussions focus on the BLAS \cite{BLAS-standard}, LINPACK
 \cite{dongarra1979linpack}, and LAPACK \cite{LAPACK-Users-Guide}
 libraries, with their long and successful history and frequent use in
 C++ linear algebra libraries and applications.  This survey also puts
@@ -42,9 +42,10 @@ think should guide development of a standard library.  Section
 \ref{S:other-langs} surveys lessons learned from the BLAS, LINPACK,
 and LAPACK.  We describe some other standardization efforts that
 extend the BLAS in Section \ref{S:other-standards}.  Section
-\ref{S:Python} outlines experiences from the Python community.  We
-conclude in Section \ref{S:conclusions} with our opinions on what some
-goals of a C++ linear algebra standardization effort should be.
+\ref{S:Matlab} talks about MATLAB, and Section \ref{S:Python} outlines
+experiences from the Python community.  We conclude in Section
+\ref{S:conclusions} with our opinions on what some goals of a C++
+linear algebra standardization effort should be.
 
 \section{1990's trends leading to C++ linear algebra libraries}
 \label{S:90s}
@@ -972,27 +973,106 @@ provide generic algorithms, but specialize for specific layouts.  Some
 layouts can express different ways to pack linear algebra objects that
 can help with vectorization.
 
+\section{Lessons learned from MATLAB}
+\label{S:Matlab}
+
+Summary:
+\begin{itemize}
+\item Users appreciate concise syntax and a low barrier to entry.
+\item Interfaces meant for interactive use may need a different design
+  than interfaces in a non-interactive C++ standard library.
+\end{itemize}
+
+The commercial software product MATLAB\footnote{See
+  \url{https://www.mathworks.com/products/matlab.html}.} provides a
+programming language for expressing matrices, vectors, and
+mathematical operations on those objects.  It can do much more than
+that, but this is how MATLAB started and how many users think of it.
+The product's original author, Cleve Moler, was a coauthor of EISPACK
+and LINPACK (see Section \ref{SS:other-langs:LINPACK}).  He wrote
+MATLAB as a teaching tool, so that students could use EISPACK and
+LINPACK algorithms without needing to write Fortran programs.  Moler
+gives an account of MATLAB's history in \cite{moler2004origins}.
+
+Many students of numerical linear algebra and numerical algorithms in
+general ``grew up'' using MATLAB.  They appreciate its concise syntax
+for both data structures and algorithms.  Its interactive prompt also
+lowers the barrier to entry.  Students' and practitioners' familarity
+with MATLAB means that the product has influenced the design of other
+linear algebra libraries, including C++ libraries.\footnote{See e.g.,
+  \url{http://arma.sourceforge.net/}.}  This makes it attractive to
+use MATLAB as a model for a standard C++ linear algebra library.
+
+Developers who wish to imitate MATLAB, though, should remember that
+its interface was designed first for interactive use.  Its
+``backslash'' operator for solving linear systems is a good example.
+Users like that they can express ``solve the linear system $Ax=b$''
+concisely as \texttt{x = A \ b}.  MATLAB then tries its best to solve
+the problem, but what does ``solve'' mean?  If the matrix is square,
+MATLAB first tries LU factorization with partial pivoting and
+condition number estimation.  It may find that the linear system is
+hard to solve accurately that way -- for example, because it finds a
+zero pivot, or because it estimates the matrix is very close to a
+rank-deficient matrix in finite-precision arithmetic.  At that point,
+MATLAB prints out warning messages and ``solves'' the linear system in
+a minimum-norm least-squares sense.  That is, it finds the $x$ with
+minimum 2-norm that minimizes the 2-norm of $b - Ax$.  Depending on
+the right-hand side $b$, the resulting $x$ may not even be close to
+satisfying $Ax = b$.  Users can read MATLAB's warning messages and use
+its interactive help system to know whether this is happening, learn
+what it means, and decide whether the resulting $x$ is useful to them.
+For many applications, this is exactly the $x$ they want.  MATLAB's
+fall-back to minimum-norm least squares even lets its ``solve'' $Ax=b$
+when $A$ is not square.  All these checks and fall-backs make MATLAB
+slower than the Fortran routines it wraps, but users accept and even
+welcome this in exchange for interactivity.
+
+Note that the Fortran routines (e.g., in what currently would be the
+BLAS \cite{BLAS-standard} and LAPACK \cite{LAPACK-Users-Guide}) that
+MATLAB wraps do \emph{not} behave in this way.  The routine that
+solves $Ax=b$ using LU with partial pivoting does nothing more than
+that.  It expects the matrix $A$ to be square.  If it detects a zero
+pivot, it fails, without falling back to a different algorithm or
+problem.  If you want to solve the minimum-norm least-squares problem,
+you must call a different routine.
+
+The Fortran routines behave in this way because they were not intended
+to work interactively.  Typical BLAS and LAPACK library customers must
+design their code to give sensible input to the library, and to detect
+and handle any error conditions on return, without user intervention.
+Fortran has no interactive prompt like MATLAB, that can offer hints
+and links to documentation.
+
+C++ is much more like Fortran than MATLAB.  Almost no components of
+the C++ Standard Library work interactively.  If a standard C++ linear
+algebra interface were to imitate MATLAB's backslash, how would it
+report warnings back to the user?  Printing warnings would make no
+sense if the library were being called in an interactive spreadsheet
+application.  The spreadsheet would need to detect conditions like
+near rank deficiency \emph{in code}, not by parsing some
+human-readable terminal output.  This condition might mean that the
+user constructed the problem incorrectly.  Thus, the application might
+not want to ``solve'' the problem in a least-squares sense, and may
+want to construct its own error message in terms that spreadsheet
+users would understand.
+
+MATLAB is a product which the authors themselves have found useful.
+It has a syntax designed by experts in matrix computations, that makes
+it easy to get work done quickly.  However, MATLAB is designed for
+interactive use, so not all of its interfaces may fit the C++ model.
+
 \section{Lessons learned from Python libraries}
 \label{S:Python}
 
 Summary: The Python programming language does not come with native
 linear algebra or multidimensional array support, but Numpy offers a
-library solution.  Users find Numpy's Fortran / MATLAB - style slice
-notation and its integration with many provided numerical algorithms
-attractive.  Many potential users of a C++ linear algebra library
-would be familiar with Python and Numpy.
+library solution.  Users find Numpy's Fortran / MATLAB\footnote{See
+  Section \ref{S:Matlab}.} - style slice notation and its integration
+with many provided numerical algorithms attractive.  Many potential
+users of a C++ linear algebra library would be familiar with Python
+and Numpy.
 
-Scientists saw Python in the 2000s as an alternative for
-\texttt{MATLAB},\footnote{See
-  \url{https://www.mathworks.com/products/matlab.html}.}  MATLAB
-itself was written as a teaching tool that let students use EISPACK
-and LINPACK algorithms without needing to write Fortran programs.  See
-\cite{moler2004origins} for the history of MATLAB.  Its author, Cleve
-Moler, was also a coauthor of EISPACK and LINPACK.  MATLAB has
-influenced the design of multiple C++ linear algebra
-libraries,\footnote{See e.g., \url{http://arma.sourceforge.net/}.}
-and continues as a commercial product.
-
+Scientists in the 2000's saw Python as an alternative to MATLAB.
 Python is a general-purpose programming language that comes with many
 standard libraries.  This can make it easier for writing complete
 applications that, for example, interact with databases, access the
