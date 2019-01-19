@@ -684,7 +684,7 @@ Coauthors Nasos Iliopoulos and John Michopoulos had been the primary
 the following lessons in this section, based on their personal
 experience and algebra system design reflections.  Author Mark Hoemmen
 contributes footnotes with his views on a few of their lessons.
- 
+
 \begin{enumerate}
 \item The separation between matrix and vector classes provide no real
   benefit. At the same time it necessitates redundant overloads and
@@ -1036,7 +1036,7 @@ existing library to implement the GraphBLAS.  Here are some reasons
 why Tpetra does not permit arbitrary matrix entry types:
 \begin{itemize}
 \item Tpetra needs the types to work in CUDA code.  This excludes
-  types that do dynamic memory allocation inside, such as the ``na\"ve
+  types that do dynamic memory allocation inside, such as the ``na\"ive
   implementation of subsets of a set of integers'' type mentioned
   above.  A small number of Trilinos developers go through a lot of
   trouble to make Tpetra work for a few types that have run-time
@@ -1151,7 +1151,7 @@ Developers who wish to imitate MATLAB, though, should remember that
 its interface was designed first for interactive use.  Its
 ``backslash'' operator for solving linear systems is a good example.
 Users like that they can express ``solve the linear system $Ax=b$''
-concisely as \texttt{x = A \ b}.  MATLAB then tries its best to solve
+concisely as \texttt{x = A \textbackslash\ b}.  MATLAB then tries its best to solve
 the problem, but what does ``solve'' mean?  If the matrix is square,
 MATLAB first tries LU factorization with partial pivoting and
 condition number estimation.  It may find that the linear system is
@@ -1274,7 +1274,7 @@ Python 3 introduced a new operator for matrix-matrix multiplication
 with \texttt{array}.  This lets users perform all typical array
 operations with operators.
 
-\subsection{The current langage of choice for data science and machine learning}
+\subsection{The current language of choice for data science and machine learning}
 \label{S:Python:currentlanguage}
 
 Python is currently the \texttt{de facto} language for data science and
