@@ -8,8 +8,8 @@ encouraged to see new proposals ``rediscovering'' good ideas, but we
 also wanted to make sure that participants had the chance to learn
 from history.  To this end, we wrote this survey of lessons learned
 from linear algebra libraries and standardization efforts, in C++ and
-other languages (including Fortran and Python).  Fortran discussions
-focus on the BLAS \cite{BLAS-standard}, LINPACK
+other languages (including Fortran, MATLAB, and Python).  Fortran
+discussions focus on the BLAS \cite{BLAS-standard}, LINPACK
 \cite{dongarra1979linpack}, and LAPACK \cite{LAPACK-Users-Guide}
 libraries, with their long and successful history and frequent use in
 C++ linear algebra libraries and applications.  This survey also puts
@@ -24,13 +24,20 @@ is not to claim objectivity or completeness, but rather to tell some
 stories that could help guide the development of a standard C++ linear
 algebra library.  To this end, one of the authors, Mark Hoemmen,
 includes anecdotes from his experiences working on the Trilinos C++
-project \cite{heroux2005trilinos} since 2010.  The authors also
-include oral histories that they collected circa 2018 from a POOMA
-project developer, Chris Luchini \cite{hoemmen2018history}, as well as
-an interview of Jack Dongarra taken for the Society of Industrial and
-Applied Mathematics in 2005 \cite{dongarra2005history}.  We also
+project \cite{heroux2005trilinos} since 2010, and oral histories that
+he collected circa 2018 from a POOMA project developer, Chris Luchini
+\cite{hoemmen2018history}.  Two other authors, Nasos Iliopoulos and
+John Michopoulos, list lessons learned from their experiences as
+\texttt{boost.uBlas} developers.  Another author, Matthieu Brucher,
+contributes lessons learned from Python.  Not all authors necessarily
+agree completely with each other about all the opinions they express
+here, but we think readers would prefer a diversity of views at this
+point.  This document also refers to an interview of Jack Dongarra
+taken for the Society of Industrial and Applied Mathematics in 2005
+\cite{dongarra2005history}, and Cleve Moler's 2004 article on the
+history of his creation, MATLAB \cite{moler2004origins}.  We also
 incorporate the fruits of discussion from many other contributors, not
-all of which we were able to credit here.  Oral histories also carry
+all of which we were able to credit here.  Oral histories carry
 subjectivity, but nonetheless can help readers understand design
 motivations.
 
@@ -38,13 +45,16 @@ We begin with Section \ref{S:90s}, an overview of 1990's trends in
 computer hardware and applications that shaped early C++ linear
 algebra libraries.  Section \ref{S:features} highlights features of
 C++ linear algebra libraries, both historical and current, that we
-think should guide development of a standard library.  Section
+think should guide development of a standard library.  In Section
+\ref{S:uBlas}, two authors give lessons they learned from their
+experiences as the primary \texttt{boost.uBlas} developers.  Section
 \ref{S:other-langs} surveys lessons learned from the BLAS, LINPACK,
 and LAPACK.  We describe some other standardization efforts that
 extend the BLAS in Section \ref{S:other-standards}.  Section
-\ref{S:Python} outlines experiences from the Python community.  We
-conclude in Section \ref{S:conclusions} with our opinions on what some
-goals of a C++ linear algebra standardization effort should be.
+\ref{S:Matlab} talks about MATLAB, and Section \ref{S:Python} outlines
+experiences from the Python community.  We conclude in Section
+\ref{S:conclusions} with our opinions on what some goals of a C++
+linear algebra standardization effort should be.
 
 \section{1990's trends leading to C++ linear algebra libraries}
 \label{S:90s}
@@ -97,6 +107,7 @@ be easily extended\dots.  In short, OOP encourages computer
 implementations of mathematical abstractions'' \cite{arge1996oon}.
 
 \subsubsection{Early lessons learned}
+\label{SSS:90s:OON:early}
 
 Summary: in the early 1990's, C++ developers working on
 object-oriented numerics had already learned the following lessons:
@@ -135,12 +146,13 @@ developers working on object-oriented numerics had already learned the
 lessons mentioned in the summary above.
 
 \subsubsection{Antipattern: Classes with too many responsibilities}
+\label{SSS:90s:OON:stateful}
 
 Summary: Some early object-oriented numerics libraries have objects
 that can be in many different states, and many mutating instance
 methods with state-dependent preconditions.  This is an antipattern
 that adds complexity for both users and developers.  Application of
-the One Responsibility Rule and Idiomatic use of the modern C++ type
+the One Responsibility Rule and idiomatic use of the modern C++ type
 system can correct this without sacrificing performance.
 
 It's easy to take the phrase ``object-oriented programming'' for
@@ -148,16 +160,16 @@ granted, as equivalent to ``modern'' or ``not old fashioned.''
 Proponents of object-oriented numerics contrasted their interfaces
 with old-fashioned Fortran code: routines with cryptically short names
 that take dozens of arguments and have thousands of lines of code, and
-single objects with state scattered over many separate
-variables \cite{arge1996oon}.  Object-oriented interfaces
-grouped together state into nouns (e.g., ``matrix,'' ``vector'') and
-verbs (e.g., ``dot product,'' ``matrix-vector multiply'') that users
-found self-documenting.
+single objects with state scattered over many separate variables
+\cite{arge1996oon}.  Object-oriented interfaces grouped together state
+into nouns (e.g., ``matrix,'' ``vector'') and verbs (e.g., ``dot
+product,'' ``matrix-vector multiply'') that users found
+self-documenting.
 
 This is overall a good thing.  For example, contrast ScaLAPACK's
 parallel dense LU factorization interface, with its long list of
 mysterious arguments and complicated parallel distribution setup
-boilerplate, with the clean interfaces to the same functionality in
+boilerplate, with the concise interfaces to the same functionality in
 the Elemental \cite{poulson2013elemental} or Global Arrays
 \cite{GlobalArrays} libraries.  However, a common design antipattern
 in early object-oriented numerics libraries, is to let an object of a
@@ -166,7 +178,6 @@ methods whose preconditions depend on the object's state.\footnote{See
   e.g., \cite[p. 6]{arge1996oon}.  It's a bit unfair to pick on this
   one source, as the authors can think of many examples, including
   codes on which the authors work.}
-
 This approach seems natural for many scientific and engineering
 applications, that have a small number of ``objects'' representing
 large memory allocations that the application modifies in place.
@@ -217,7 +228,7 @@ Note that even though the Sparse BLAS interface standard gives
 matrices to users by integer handle rather than by instance of a C++
 class, it shares the same property that the handle does not change
 after the equivalent of \texttt{FillComplete}
-\cite[pp. 129--30]{BLAS-standard}.
+\cite[pp.\ 129--30]{BLAS-standard}.
 
 \subsection{Democratization of high-performance computing}
 \label{SS:90s:demo}
@@ -305,10 +316,10 @@ computer graphics.  For example, OpenGL 1.0 came out in 1992
   the following overview of the history of OpenGL and Direct3D:
   \url{https://news.ycombinator.com/item?id=2711231}.} Along with this
 came new hardware and instruction sets, like MMX \cite{mittal1997mmx}
-and 3DNow! \cite{oberman1999amd}, for accelerating graphics operations
-on consumer processors.  Computer graphics depends heavily on
-performing many small dense linear algebra operations.  This is a use
-case that historically did not cross over much with non-graphics
+and 3DNow!\ \cite{oberman1999amd}, for accelerating graphics
+operations on consumer processors.  Computer graphics depends heavily
+on performing many small dense linear algebra operations.  This is a
+use case that historically did not cross over much with non-graphics
 scientific computation.  However, the scientific computing community
 is starting to show more interest in so-called ``batched'' linear
 algebra interfaces for performing many small dense operations in
@@ -449,7 +460,7 @@ creates expressions on the left-hand side, such as \texttt{auto z = x
 % This is because such code does not invoke the expression class'
 % \texttt{operator=} method.
 
-\subsection{Generic iteration over sequences}
+\subsection{Generic iteration over multidimensional sequences}
 \label{SS:features:iteration}
 
 Summary: Developers discovered that C++ let them express generic
@@ -482,19 +493,19 @@ platforms.
 
 The Kokkos C++ library\footnote{See
   \url{https://github.com/kokkos/kokkos}.} uses a different approach
-for parallel iteration over multidimensional index ranges.  Users
-specify the index ranges.  They may also specify nondefault features
-as template parameters, like the computer architecture, the iteration
-order, and whether to use tiling with compile-time sizes.  Kokkos uses
-this specification to generate parallel code.  An important lesson
-learned from Kokkos is that users need control over multidimensional
-iteration order in order to get best performance.
+for parallel iteration over multidimensional index ranges.  Kokkos'
+\texttt{MDRangePolicy} has users specify the index ranges.  They may
+also specify nondefault features as template parameters, like the
+computer architecture, the iteration order, and whether to use tiling
+with compile-time sizes.  Kokkos uses this specification to generate
+parallel code.  An important lesson learned from Kokkos is that users
+need control over multidimensional iteration order in order to get
+best performance.
 
 Other approaches to multidimensional sequence iteration include
-Einstein notation for tensor summation.
-%
-% TODO cite existing work on this
-%
+Einstein notation for tensor summation.  Authors Nasos Iliopoulos and
+John Michopoulos have experience optimizing this in a C++ library.
+See also Section \ref{S:uBlas}.
 
 \subsection{Engines: Implementation polymorphism}
 \label{SS:features:engine}
@@ -509,8 +520,8 @@ the parallelization mechanism, the allocator, and the storage layout.
 The POOMA (Parallel Object-Oriented Methods and Applications) project
 was most active 1998-2000. POOMA's goal was to support structured grid
 and dense array computations. As per oral history
-\cite{hoemmen2018history} and POOMA's documentation\footnote{See
-  \url{http://www.nongnu.org/freepooma/tutorial}.}, the team had a
+\cite{hoemmen2018history} and POOMA's documentation,\footnote{See
+  \url{http://www.nongnu.org/freepooma/tutorial}.} the team had a
 particular interest in SGI Origin shared-memory parallel
 computers. POOMA shares features with more recent linear algebra
 libraries, such as polymorphism on storage layout and parallel
@@ -593,17 +604,17 @@ have significant reuse, like matrix-matrix multiply, but also for some
 expressions that ``stream'' through the entries of vectors or
 matrices.  For example, fusing too many loops may thrash the cache or
 cause register spilling, so deciding whether to evaluate eagerly or
-lazily may require hardware-specific
-information \cite{siek2008build}. It's possible to encode
-many such compilation decisions in a pure C++ library with
-architecture-specific parameters.\footnote{See, e.g., the following
-  2013 Eigen presentation:
-  \url{http://downloads.tuxfamily.org/eigen/eigen_CGLibs_Giugno_Pisa_2013.pdf}.}
-However, this burdens the library with higher implementation
-complexity and increased compilation time.  Library designers
-may prefer a simpler interface that excludes expressions with reuse
-(that have correctness issues with lazy evaluation) and lets users
-decide where temporaries get allocated.
+lazily may require hardware-specific information
+\cite{siek2008build}. It's possible to encode many such compilation
+decisions in a pure C++ library with architecture-specific
+parameters.\footnote{See, e.g., the following 2013 Eigen presentation:
+  \url{http://downloads.tuxfamily.org/eigen/eigen_CGLibs_Giugno_Pisa_2013.pdf}.
+  For comparable \texttt{Boost.uBlas} optimizations, see Section
+  \ref{S:uBlas}.}  However, this burdens the library with higher
+implementation complexity and increased compilation time.  Library
+designers may prefer a simpler interface that excludes expressions
+with reuse (that have correctness issues with lazy evaluation) and
+lets users decide where temporaries get allocated.
 
 \subsection{Vector spaces and parallel data distributions}
 \label{SS:features:spaces}
@@ -665,14 +676,147 @@ to tensors.  Tensors have more spaces than matrices.  Users may find
 it hard to keep track of which matter for the operations that they
 want to perform.
 
+\section{Lessons learned from Boost::uBlas development}
+\label{S:uBlas}
+
+Coauthors Nasos Iliopoulos and John Michopoulos had been the primary
+\texttt{boost.uBlas} developers for a number of years. They contribute
+the following lessons in this section, based on their personal
+experience and algebra system design reflections.  Author Mark Hoemmen
+contributes footnotes with his views on a few of their lessons.
+ 
+\begin{enumerate}
+\item The separation between matrix and vector classes provide no real
+  benefit. At the same time it necessitates redundant overloads and
+  hinders the ability to develop certain generic algorithms. Other
+  libraries like Eigen use the matrix class to represent both matrices
+  and vectors. Vectors then can be just a typedef
+  away.\footnote{Hoemmen: At the lowest level of data access
+    containers, it helps performance to know the number of dimensions
+    at compile time.  This is based on my experience with
+    \texttt{Kokkos::View}, ancestor of \texttt{mdspan}.  The
+    \texttt{mdspan} class can represent vectors, matrices, and general
+    tensors, by changing its \texttt{Extents} template argument.  See
+    also the remarks below, e.g., the \texttt{tensor} example.}
+\item With the current compile-time utilities in C++, there is little
+  reason not to base an algebra system on a tensor type (or
+  multidimensional algebraic container) interface.
+\item The distinction between vector and matrix can be easily
+  performed using a static / dynamic dimensions mechanism.
+\item Full container aliasing issues are resolved using move
+  semantics.\footnote{Hoemmen: ``Aliasing issues'' refers to
+    expressions where the output aliases the input in a way that makes
+    computation much harder without creating a temporary.  See the
+    dense matrix-matrix multiply example \texttt{A = A * A} in Section
+    \ref{SS:features:lazy}.  ``Move semantics'' here refers in part to
+    the optimization described in \cite{ropert2019copy}.}
+\item Staying away from an object-based interface has many benefits.
+  For example, prefer \texttt{inverse(A)} to
+  \texttt{A.inverse()}.\footnote{Hoemmen: See Section
+    \ref{SSS:90s:OON:stateful}, and Scott Meyer's article on how
+    non-member functions improve encapsulation
+    \cite{meyers2000nonmember}.}
+\item Users need out-of-the-box algorithms, even though there are
+  strong arguments to not provide them by default. In any case, access
+  to algorithms is very important and should be a simple task.
+\item Expecting users to install LAPACK to get a general matrix
+  inverse is unfortunately too much to ask and in practice turns users
+  away. For fixed-size containers, providing some default algorithms
+  (e.g., matrix inverse) is an acceptable
+  compromise.\footnote{Hoemmen: A library like \texttt{Boost.uBlas},
+    that users must download and install, differs from a component of
+    the C++ Standard Library.  Getting a project's build system to
+    interface portably with the BLAS and LAPACK takes a perhaps
+    surprising amount of work.  However, system vendors can and do
+    provide pre-installed optimized BLAS and LAPACK libraries.  Some
+    vendors, like Cray, make their compilers link with these libraries
+    by default.  Note that the BLAS and LAPACK were designed for large
+    problems, and may not perform as well for very small, fixed-size
+    problems.  See Section \ref{SS:other-standards:batched}.}
+\item Performance of certain algorithms (like matrix-matrix multiply
+  or transpose) can be increased dramatically when the implementation
+  accounts for cache locality. That is to say, that even simple
+  algorithms are particularly hard to implement optimally.
+\item There will always be the need for customizing even the most
+  basic of algorithms.
+\item Deeply nested expression templates (like
+  \texttt{matmult(matmult(A, B), C);}) result in redundant
+  operations. Pattern matching and sub-expression temporaries can
+  easily and optimally deal with this issue though.\footnote{Hoemmen:
+    See Section \ref{SS:features:lazy}.}
+\item Sub-indexing syntax is very important for the clarity of written
+  code. \texttt{uBlas}' sub-indexing is not as clean as it should be.
+\item A descriptive multi-index traversal interface (like for example
+  exists in Matlab, Python, Mathematica and others) is VERY powerful
+  and is missing from C++. Index notation and / or Kokkos'
+  \texttt{MDRangePolicy} are possible solutions.\footnote{Hoemmen: See
+    Section \ref{SS:features:iteration}.}
+\item The number of iterator concepts you can have for matrices is
+  very big. A possible solution is to define the simplest iterator
+  possible (i.e., the one that optimally traverses the memory and
+  returns coordinates and a value).
+\item Mixed static / dynamic dimension specifications are very
+  important both in terms of semantics and in terms of
+  performance. For example a tensor with its first dimension size
+  known at compile time, while the other not, can be defined as:
+  \texttt{tensor<double, fixed<3>, dynamic> mat;}.\footnote{Hoemmen:
+    The ``extents'' feature in the \texttt{mdspan} proposal
+    \cite{P0009r8} lets users specify some dimensions at compile time,
+    and others at run time.}
+\item Fixed-size containers are essential for an algebra library.
+\item Development of generic algorithms that operate on different
+  matrix types (for example sparse with dense) may work, but cannot be
+  trivially optimal. Pattern matching can be leveraged in this case
+  and can provide acceptable solutions.\footnote{Hoemmen: See Section
+    \ref{SS:features:return-type-deduction}.}
+\item Deciding what the matrix-matrix, matrix-vector, and
+  vector-vector \texttt{operator*} should behave like is not an easy
+  choice. Probably the best choice is to use the simplest form as for
+  example adopted by Mathematica, i.e., to define it as the
+  element-wise product.
+\item \texttt{C++11, 14, 17, 20} and beyond provide tremendous
+  opportunities for reimagining the algebra library design, making it
+  more generic, with zero abstraction overhead and at the same time
+  satisfying all users (by supporting scalars, vectors, matrices and
+  tensors through a single interface).
+\item Expression templates are a good mechanism for supporting various
+  architectures.  See \cite{iliopoulos2011ublascl}, with the erratum
+  that ``MFlops'' should be replaced with ``GFlops.''
+\item Awareness of how lazy evaluation works, particularly with the
+  \texttt{auto} keyword, is of paramount importance.\footnote{Hoemmen:
+    See Sections \ref{SS:features:templates} and
+    \ref{SS:features:lazy}.}
+\item Type traits for resolving type issues and performing pattern
+  matching can become very complex and does not work nicely because of
+  the ``curse of overload dimensionallity.''  A system where
+  stakeholders provide optimal solutions though can work in this
+  case. Prefer Concepts when they become available.
+\item Separation of algorithms from data structures is desirable but
+  probably very hard to achieve in an optimal sense, particularly when
+  addressing multiple architectures.
+\item Higher-dimensional array (tensor) algebra enables particularly
+  far reaching programming capabilities. The design of systems from
+  the get-go to account for them is too much of a golden opportunity
+  to ignore. All newer systems (for example like Eigen) are designed
+  with a higher-dimensional container type that lends its qualities to
+  other abstractions if needed.
+\item \texttt{Auto}, Concepts, and \texttt{constexpr if} need to be
+  factored in on how users will be using a contemporary C++ algebra
+  system.
+\end{enumerate}
+
 \section{Lessons learned from Fortran libraries}
 \label{S:other-langs}
 
-We begin with Section \ref{SS:other-langs:LINPACK}.  This uses Jack
-Dongarra's oral history of the LINPACK project and examples from other
-libraries to show that one of the most important features of a linear
-algebra library, is that it is generic on the matrix element type.  In
-Section \ref{SS:other-langs:BLAS}, the example of the BLAS illustrates
+Here, we talk about experiences from Fortran.  We include both
+historical and current Fortran linear algebra libraries, as well as
+lessons learned from High Performance Fortran, a parallel extension of
+Fortran that influenced later revisions of the Fortran standard.
+Section \ref{SS:other-langs:LINPACK} uses Jack Dongarra's oral history
+of the LINPACK project and examples from other libraries to show that
+one of the most important features of a linear algebra library, is
+that it is generic on the matrix element type.  In Section
+\ref{SS:other-langs:BLAS}, we illustrate with the example of the BLAS
 that it's helpful to separate libraries or levels of abstraction, by
 whether their developers are more likely to be numerical linear
 algebra experts or performance tuning experts.  Finally, the example
@@ -680,11 +824,7 @@ of High Performance Fortran in Section \ref{SS:other-langs:HPF}
 teaches that an interface should make expensive operations explicit,
 whenever possible.
 
-% , and that good library interface abstractions can accomplish
-% most if not all of what a language can do.
-
-\subsection{LINPACK: One can write algorithms
-  generic on the matrix element type}
+\subsection{LINPACK: Can write algorithms generic on the matrix element type}
 \label{SS:other-langs:LINPACK}
 
 Summary: The LINPACK project shows that it's possible to write linear
@@ -928,7 +1068,7 @@ type, and whether the type could work as a reduction result.  (The
 OpenMP standard only recently started allowing custom types for
 reduction results, for example.)
 
-\subsection{Batched BLAS}
+\subsection{Batched BLAS: A profitable special case}
 \label{SS:other-standards:batched}
 
 Summary: ``Batched'' basic linear algebra operations, that solve many
@@ -946,7 +1086,12 @@ generally with the intention of parallelization and/or vectorization
 algebra actually do many small, often independent dense operations.
 Scientific and engineering computing have plenty of examples, but the
 strong and growing interest in machine learning also calls for batched
-linear algebra.
+linear algebra.  It's possible to use existing libraries, like the
+BLAS and LAPACK, to solve these problems.  However, these libraries
+were designed to solve one large problem at a time, fast and
+accurately.  For example, they check input arguments for consistency
+on every call, which could take longer than the actual algorithm for a
+tiny matrix.  A batched library could amortize these checks.
 
 The interface of batched linear algebra operations matters a lot for
 performance, but may constrain generality.  For example, requiring a
@@ -972,27 +1117,106 @@ provide generic algorithms, but specialize for specific layouts.  Some
 layouts can express different ways to pack linear algebra objects that
 can help with vectorization.
 
+\section{Lessons learned from MATLAB}
+\label{S:Matlab}
+
+Summary:
+\begin{itemize}
+\item Users appreciate concise syntax and a low barrier to entry.
+\item Interfaces meant for interactive use may need a different design
+  than interfaces in a non-interactive C++ standard library.
+\end{itemize}
+
+The commercial software product MATLAB\footnote{See
+  \url{https://www.mathworks.com/products/matlab.html}.} provides a
+programming language for expressing matrices, vectors, and
+mathematical operations on those objects.  It can do much more than
+that, but this is how MATLAB started and how many users think of it.
+The product's original author, Cleve Moler, was a coauthor of EISPACK
+and LINPACK (see Section \ref{SS:other-langs:LINPACK}).  He wrote
+MATLAB as a teaching tool, so that students could use EISPACK and
+LINPACK algorithms without needing to write Fortran programs.  Moler
+gives an account of MATLAB's history in \cite{moler2004origins}.
+
+Many students of numerical linear algebra and numerical algorithms in
+general ``grew up'' using MATLAB.  They appreciate its concise syntax
+for both data structures and algorithms.  Its interactive prompt also
+lowers the barrier to entry.  Students' and practitioners' familarity
+with MATLAB means that the product has influenced the design of other
+linear algebra libraries, including C++ libraries.\footnote{See e.g.,
+  \url{http://arma.sourceforge.net/}.}  This makes it attractive to
+use MATLAB as a model for a standard C++ linear algebra library.
+
+Developers who wish to imitate MATLAB, though, should remember that
+its interface was designed first for interactive use.  Its
+``backslash'' operator for solving linear systems is a good example.
+Users like that they can express ``solve the linear system $Ax=b$''
+concisely as \texttt{x = A \ b}.  MATLAB then tries its best to solve
+the problem, but what does ``solve'' mean?  If the matrix is square,
+MATLAB first tries LU factorization with partial pivoting and
+condition number estimation.  It may find that the linear system is
+hard to solve accurately that way -- for example, because it finds a
+zero pivot, or because it estimates the matrix is very close to a
+rank-deficient matrix in finite-precision arithmetic.  At that point,
+MATLAB prints out warning messages and ``solves'' the linear system in
+a minimum-norm least-squares sense.  That is, it finds the $x$ with
+minimum 2-norm that minimizes the 2-norm of $b - Ax$.  Depending on
+the right-hand side $b$, the resulting $x$ may not even be close to
+satisfying $Ax = b$.  Users can read MATLAB's warning messages and use
+its interactive help system to know whether this is happening, learn
+what it means, and decide whether the resulting $x$ is useful to them.
+For many applications, this is exactly the $x$ they want.  MATLAB's
+fall-back to minimum-norm least squares even lets its ``solve'' $Ax=b$
+when $A$ is not square.  All these checks and fall-backs make MATLAB
+slower than the Fortran routines it wraps, but users accept this in
+exchange for interactivity and other features.
+
+Note that the Fortran routines (e.g., in what currently would be the
+BLAS \cite{BLAS-standard} and LAPACK \cite{LAPACK-Users-Guide}) that
+MATLAB wraps do \emph{not} behave in this way.  The routine that
+solves $Ax=b$ using LU with partial pivoting does nothing more than
+that.  It expects the matrix $A$ to be square.  If it detects a zero
+pivot, it stops and returns an error code, without falling back to a
+different algorithm or problem.  If you want to solve the minimum-norm
+least-squares problem, you must call a different routine.
+
+The Fortran routines behave in this way because they were not intended
+to work interactively.  Typical BLAS and LAPACK library customers must
+design their code to give sensible input to the library, and to detect
+and handle any error conditions on return, without user intervention.
+Fortran has no interactive prompt like MATLAB, that can offer hints
+and links to documentation.
+
+C++ is much more like Fortran than MATLAB.  Almost no components of
+the C++ Standard Library work interactively.  If a standard C++ linear
+algebra interface were to imitate MATLAB's backslash, how would it
+report warnings back to the user?  Printing warnings would make no
+sense if the library were being called in an interactive spreadsheet
+application.  The spreadsheet would need to detect conditions like
+near rank deficiency \emph{in code}, not by parsing some
+human-readable terminal output.  This condition might mean that the
+user constructed the problem incorrectly.  Thus, the application might
+not want to ``solve'' the problem in a least-squares sense, and may
+want to construct its own error message in terms that spreadsheet
+users would understand.
+
+MATLAB is a product which the authors themselves have found useful.
+It has a syntax designed by experts in matrix computations, that makes
+it easy to get work done quickly.  However, MATLAB is designed for
+interactive use, so not all of its interfaces may fit the C++ model.
+
 \section{Lessons learned from Python libraries}
 \label{S:Python}
 
 Summary: The Python programming language does not come with native
 linear algebra or multidimensional array support, but Numpy offers a
-library solution.  Users find Numpy's Fortran / MATLAB - style slice
-notation and its integration with many provided numerical algorithms
-attractive.  Many potential users of a C++ linear algebra library
-would be familiar with Python and Numpy.
+library solution.  Users find Numpy's Fortran / MATLAB\footnote{See
+  Section \ref{S:Matlab}.} - style slice notation and its integration
+with many provided numerical algorithms attractive.  Many potential
+users of a C++ linear algebra library would be familiar with Python
+and Numpy.
 
-Scientists saw Python in the 2000s as an alternative for
-\texttt{MATLAB},\footnote{See
-  \url{https://www.mathworks.com/products/matlab.html}.}  MATLAB
-itself was written as a teaching tool that let students use EISPACK
-and LINPACK algorithms without needing to write Fortran programs.  See
-\cite{moler2004origins} for the history of MATLAB.  Its author, Cleve
-Moler, was also a coauthor of EISPACK and LINPACK.  MATLAB has
-influenced the design of multiple C++ linear algebra
-libraries,\footnote{See e.g., \url{http://arma.sourceforge.net/}.}
-and continues as a commercial product.
-
+Scientists in the 2000's saw Python as an alternative to MATLAB.
 Python is a general-purpose programming language that comes with many
 standard libraries.  This can make it easier for writing complete
 applications that, for example, interact with databases, access the
@@ -1161,7 +1385,13 @@ useful insights and suggestions that enriched this paper and will
 certainly enrich the library.  This paper will undergo further
 revision, so if we omitted your name, please let us know.
 
-One of the authors is an employee of Sandia National Laboratories.
+The following authors wish to list their affiliations:
+\begin{itemize}
+\item Mark Hoemmen, Sandia National Laboratories; and
+\item Jayesh Badwaik, Department of Mathematics, University of W\"urzburg.
+\end{itemize}
+Other authors represent only themselves, not their institutions.
+
 Sandia National Laboratories is a multimission laboratory managed and
 operated by National Technology \& Engineering Solutions of Sandia,
 LLC, a wholly owned subsidiary of Honeywell International, Inc., for
