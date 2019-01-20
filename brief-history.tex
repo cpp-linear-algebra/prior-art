@@ -41,7 +41,7 @@ all of which we were able to credit here.  Oral histories carry
 subjectivity, but nonetheless can help readers understand design
 motivations.
 
-We begin with Section \ref{S:90s}, an overview of 1990's trends in
+We begin with Section \ref{S:90s}, an overview of 1990s trends in
 computer hardware and applications that shaped early C++ linear
 algebra libraries.  Section \ref{S:features} highlights features of
 C++ linear algebra libraries, both historical and current, that we
@@ -56,11 +56,11 @@ experiences from the Python community.  We conclude in Section
 \ref{S:conclusions} with our opinions on what some goals of a C++
 linear algebra standardization effort should be.
 
-\section{1990's trends leading to C++ linear algebra libraries}
+\section{1990s trends leading to C++ linear algebra libraries}
 \label{S:90s}
 
 Two key features of modern C++ -- templates, and the Standard Template
-Library -- both evolved in the 1990's.  That time also spawned other
+Library -- both evolved in the 1990s.  That time also spawned other
 trends concurrent to and possibly shaping the development of early C++
 linear algebra libraries.  Surveying these trends can help us see why
 we might want such libraries in the first place, and what motivated
@@ -87,7 +87,7 @@ Linear algebra libraries in C++ at first evolved from the general
 category of ``object-oriented programming'' (OOP).  One can see the
 explosion of interest in so-called ``object-oriented numerics'' by the
 large variety of conferences that sprang up in the
-mid-1990's.\footnote{See e.g.,
+mid-1990s.\footnote{See e.g.,
   \url{http://www.math.unipd.it/~michela/OP.htm\#conferences}.}  For
 example, the First annual Object-Oriented Numerics Conference
 (OON-SKI) took place in 1993.\footnote{See
@@ -99,8 +99,8 @@ arrays of floating-point numbers, doing things like simulating the
 physical world or analyzing large quantities of data statistically.
 
 Numerical library developers of the time saw OOP as a way to ``keep
-the CPU-time constant while reducing the human time
-drastically'' \cite{arge1996oon}.  OOP's encourages modularity and
+the CPU-time constant while reducing the human time drastically''
+\cite{arge1996oon}.  The technique encourages modularity and
 encapsulation, and thus simplifies testing and reuse of software
 components. It lets developers create ``flexible applications that can
 be easily extended\dots.  In short, OOP encourages computer
@@ -109,7 +109,7 @@ implementations of mathematical abstractions'' \cite{arge1996oon}.
 \subsubsection{Early lessons learned}
 \label{SSS:90s:OON:early}
 
-Summary: in the early 1990's, C++ developers working on
+Summary: in the early 1990s, C++ developers working on
 object-oriented numerics had already learned the following lessons:
 \begin{itemize}
 \item Libraries want users to write linear algebra expressions in code
@@ -310,7 +310,7 @@ and maintainability while delivering acceptable performance''
 \subsection{Democratization of computer graphics}
 \label{SS:90s:graphics}
 
-The 1990's also saw a standardization of programming models for
+The 1990s also saw a standardization of programming models for
 computer graphics.  For example, OpenGL 1.0 came out in 1992
 \cite{OpenGL-history}, and DirectX not long after.\footnote{See, e.g.,
   the following overview of the history of OpenGL and Direct3D:
@@ -325,7 +325,7 @@ is starting to show more interest in so-called ``batched'' linear
 algebra interfaces for performing many small dense operations in
 parallel \cite{dongarra2016batched}.
 
-\subsection{Summary of 1990's trends}
+\subsection{Summary of 1990s trends}
 \label{SS:90s:summary}
 
 A massive change in high-performance computer architectures and
@@ -355,7 +355,7 @@ In summary:
   optimized C or Fortran code.
 \item C++ templates, including expression templates, helped close the
   ``performance gap'' with optimized Fortran code.
-\item C++ compilers of the 1990's did not necessarily have complete or
+\item C++ compilers of the 1990s did not necessarily have complete or
   correct implementations of templates.  Some linear algebra libraries
   excluded templates as a result.
 \item Compilers are better at compiling templates now, so we don't
@@ -481,11 +481,11 @@ generalization of C++ iterators, and as a precursor to the C++ Ranges
 proposal \cite{Niebler2018}.
 
 By the time one of the authors (Mark Hoemmen) encountered the
-Bernoulli project in the early 2000's, it had abandoned C++ templates
+Bernoulli project in the early 2000s, it had abandoned C++ templates
 in favor of a code generation framework based on OCaml (or some other
 ML derivative).  Our guess is that using OCaml to generate C code,
 instead of using C++ templates, avoided C++ compiler correctness and
-performance issues that were more common in the early 2000's.
+performance issues that were more common in the early 2000s.
 Nevertheless, this suggests a lesson learned: the more ambitiously
 complex a C++ library, the more programmer effort and expertise it
 requires, and the bigger the risk for good performance on many
@@ -880,7 +880,7 @@ standard Fortran 77, Fortran 95, and C interface for linear algebra
 operations \cite{BLAS-standard}.  The Standard was published in 2002
 and includes dense, banded, and sparse linear algebra operations.
 However, the heart of the BLAS is dense and banded linear algebra
-operations.  The BLAS in some form has been around since the 1970's
+operations.  The BLAS in some form has been around since the 1970s
 \cite{lawson1979blas,dongarra2005history}, and its dense core has been
 in recognizably modern form since 1990 \cite{dongarra1990blas3}.
 
@@ -1216,7 +1216,7 @@ with many provided numerical algorithms attractive.  Many potential
 users of a C++ linear algebra library would be familiar with Python
 and Numpy.
 
-Scientists in the 2000's saw Python as an alternative to MATLAB.
+Scientists in the 2000s saw Python as an alternative to MATLAB.
 Python is a general-purpose programming language that comes with many
 standard libraries.  This can make it easier for writing complete
 applications that, for example, interact with databases, access the
