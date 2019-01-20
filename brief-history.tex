@@ -1224,14 +1224,22 @@ internet, or generate web pages.  Python also comes built into many
 operating systems, without installation or licensing concerns.  While
 the language was not designed for numerical computation, its
 availability and ease of learning makes it attractive in that domain.
-Python lacks native support for multidimensional arrays, but
-developers stepped up with libraries.  Travis Oliphant merged two main
-projects, \texttt{Numarray} and \texttt{Numeric}, to create
-\texttt{Numpy}~\cite{oliphant2006numpy}. The communities behind the
-two other projects soon merged.
+
+Python does not support multidimensional arrays in the Python language
+itself.  Python 3's C API does have a Buffer protocol\footnote{See
+  \url{https://docs.python.org/3/c-api/buffer.html}.} that could be
+used to access multidimensional arrays.  Numpy (see Section
+\ref{S:Python:numpy}) builds on top of the Buffer protocol.
 
 \subsection{Numpy}
 \label{S:Python:numpy}
+
+Python's lack of in-language support for multidimensional arrays and
+associated mathematical operations led to development of library
+solutions.  Travis Oliphant merged two main projects,
+\texttt{Numarray} and \texttt{Numeric}, to create
+\texttt{Numpy}~\cite{oliphant2006numpy}. The communities behind the
+two other projects soon merged.
 
 From the beginning of \texttt{Numpy}, the sister project
 \texttt{Scipy}~\cite{scipy2001} held most of the non-core features.
@@ -1245,8 +1253,11 @@ Numpy provides several key features:
   \item a true multidimensional container that was partially integrated
    inside Python 3,
   \item a ``slice'' (subarray) notation with \texttt{:}, and
-  \item broadcasting capabilities, meaning that all dimension sizes
-    don't have to match for an operation to be performed.
+  \item broadcasting capabilities,\footnote{See
+      \url{https://docs.scipy.org/doc/numpy-1.13.0/user/basics.broadcasting.html\#module-numpy.doc.broadcasting}
+      and \url{https://scipy.github.io/old-wiki/pages/EricsBroadcastingDoc}.}
+    meaning that all dimension sizes don't have to match for an
+    operation to be performed.
 \end{itemize}
 
 Numpy executes all component-wise operations in C with so-called
