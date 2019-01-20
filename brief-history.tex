@@ -704,12 +704,17 @@ contributes footnotes with his views on a few of their lessons.
 \item The distinction between vector and matrix can be easily
   performed using a static / dynamic dimensions mechanism.
 \item Full container aliasing issues are resolved using move
-  semantics.\footnote{Hoemmen: ``Aliasing issues'' refers to
+  semantics.  This can be achieved using the copy and swap idiom, or a
+  modified version of it (evaluate to temporary and swap) in case the
+  right-hand side is an expression and not a concrete object. This
+  technique is limited to full-container alias
+  resolution.\footnote{Hoemmen: ``Aliasing issues'' refers to
     expressions where the output aliases the input in a way that makes
     computation much harder without creating a temporary.  See the
     dense matrix-matrix multiply example \texttt{A = A * A} in Section
-    \ref{SS:features:lazy}.  ``Move semantics'' here refers in part to
-    the optimization described in \cite{ropert2019copy}.}
+    \ref{SS:features:lazy}.  For a discussion of the copy and swap
+    idiom and an optimization that gives up the strong exception
+    guarantee, see \cite{ropert2019copy}.}
 \item Staying away from an object-based interface has many benefits.
   For example, prefer \texttt{inverse(A)} to
   \texttt{A.inverse()}.\footnote{Hoemmen: See Section
